@@ -1,0 +1,11 @@
+{
+  "ip": "127.0.0.1",
+  "port": 3000,
+  "anybody": "iouoiuio",
+  "social": {
+    "GitHub": {
+      "blog": "https://github.com/denisshevchenko/blog",
+      "ohaskell": "https://github.com/denisshevchenko/ohaskell"
+    }
+  }
+}
