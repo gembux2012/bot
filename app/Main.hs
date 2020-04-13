@@ -1,17 +1,19 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BlockArguments #-}
 module Main where
-
 import Logger
-import qualified Data.ByteString as B
-import           Control.Monad (mzero)
-import           Data.Aeson
+import Config
+            
 
+main = do 
+   logI "todo.txt" "bot start"
+   readJson
 
-main = do
-   --logI "todo.txt" "bot start"
   
-  rawJSON <- B.readFile "config.json"
-      
-  let result = decodeStrict rawJSON :: Maybe Object  
-  putStrLn $ case result of
-         Nothing         -> "Invalid JSON!"
-         Just emailsList -> show emailsList
+{-   
+fromList [("ip",String "127.0.0.1"),("social",Object
+            (fromList [("GitHub",Object 
+               (fromList [("blog",String "https://github.com/denisshevchenko/blog"),
+                  ("ohaskell",String "https://github.com/denisshevchenko/ohaskell")]))])),
+                        ("anybody",String "iouoiuio"),("port",Number 3000.0)]                           
+  -}                               

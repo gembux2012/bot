@@ -1,0 +1,9 @@
+{
+  "logger": [
+    {
+      "pathToLog": "",
+      "maxSizeLog": 100,
+      "showToConsole": 1
+    }
+  ]
+}

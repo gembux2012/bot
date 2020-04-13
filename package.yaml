@@ -24,6 +24,9 @@ dependencies:
 - time
 - aeson
 - bytestring
+- mtl
+- containers
+
 library:
   source-dirs: src
 
