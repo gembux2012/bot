@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE TemplateHaskellQuotes #-}
+
 module Config 
   (
-     readJson
+     readConfig,
      ) where 
 
 import qualified Data.ByteString as B
@@ -12,8 +15,10 @@ import Data.Aeson.Types (parseMaybe)
 import Data.Maybe (fromMaybe)
 import Data.Aeson.Text
 import System.Environment
-import Exception (fileException)
-import Control.Exception.Base (catch)
+import Control.Exception.Base (catch, throw, throwIO)
+import Logger
+import Exception (ConfigError(..))
+
 
 
 data Logger = Logger
@@ -23,28 +28,63 @@ data Logger = Logger
           showToConsole :: Int
         }  deriving (Show)
 
-data Config = Config { logger :: [Logger]} deriving (Show)
+data Config' = Config' { logger :: [Logger]} deriving (Show)
+data Config = Either String Config'
+
+options = Logger {pathToLog = "./out", maxSizeLog = 1 , showToConsole = 1}
 
 
 instance FromJSON Logger where
     parseJSON (Object v) =
-        Logger <$> v .: "pathToLog"
-               <*> v .: "maxSizeLog"
-               <*> v .: "showToConsole"
+        Logger <$> v .:? "pathToLog"     .!= pathToLog options
+               <*> v .:? "maxSizeLog"    .!= maxSizeLog options
+               <*> v .:? "showToConsole" .!= showToConsole options
     parseJSON _ = mzero
 
-instance FromJSON Config where
+instance FromJSON Config' where
       parseJSON (Object o) = 
-          Config <$> o .: "logger"    
+          Config' <$> o .: "logger"  
+      parseJSON _ = mzero     
 
-readJson =do
-      path <-  getArgs 
-      case path of
-            [] -> putStrLn  " Warning ! the path to the config is not specified, the default settings will be used"
-            [path ,_] -> do drawJSON <- B.readFile  path `catch` fileException
-                            let result = decodeStrict drawJSON :: Maybe Config
+
+
+readConfig :: IO Config
+
+readConfig = do
+               path <- getArgs
+               return( case path of
+                      [] -> Left  "uiiouoiu"
+                      [_] -> Right head Path do 
+                                    json <- B.readFile path 
+                                    return())
+                                      
+                      
+
+ {--              
+getPath = do
+  
+readConfig = do
+             return(        
+              case getPath of
+                Left  msg -> Left msg
+                Right path -> Right do 
+                            rawJSON <- B.readFile path 
+                            let result = decodeStrict rawJSON :: Maybe [Config]
                             putStrLn $ case result of
-                                Nothing   ->  "Invalid JSON!"
-                                Just content ->  show content 
+                                   Nothing    -> "Invalid JSON!"
+                                   Just config -> show  config )
 
-
+                               
+                                                
+        
+             
+       
+                      
+                      
+                      {-
+                      let result = decodeStrict drawJSON :: Maybe Config 
+                      o <-  case result of
+                            Nothing   ->  "Invalid JSON!"
+                            Just content -> show content
+                        -}    
+                        --}

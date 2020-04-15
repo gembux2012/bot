@@ -1,13 +1,14 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BlockArguments #-}
 module Main where
 import Logger
 import Config
-            
+import Exception
 
-main = do 
-   logI "todo.txt" "bot start"
-   readJson
+import Control.Exception.Base (catch)      
+
+main = do
+  putStrLn show readJson
+  logI "todo.txt" "bot start"
+   
 
   
 {-   
