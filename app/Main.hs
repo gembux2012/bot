@@ -6,8 +6,13 @@ import Exception
 import Control.Exception.Base (catch)      
 
 main = do
-  putStrLn show readJson
-  logI "todo.txt" "bot start"
+       config <- readConfig
+       putStrLn $ case config of
+                  Left str  ->  str 
+                  Right cfg -> show cfg
+     
+        
+     -- logI "todo.txt" "bot start"
    
 
   

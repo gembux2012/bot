@@ -1,17 +1,16 @@
 module Exception
 (
-  ConfigError(..)
+  fileException
  ) where
  
 import Control.Exception
---import System.IO.Error (isDoesNotExistError,isPermissionError,isFullError,ioeGetFileName )
+import System.IO.Error (isDoesNotExistError,isPermissionError,isFullError,ioeGetFileName )
 import qualified Data.ByteString as B
-import Data.Data (Typeable)
 
-data  ConfigError = ConfigError String deriving (Show, Typeable)
-instance Exception ConfigError
 
-{-
+
+
+
 fileException :: IOException -> IO  ()
 fileException e 
     | isDoesNotExistError e = case ioeGetFileName e of
@@ -21,4 +20,4 @@ fileException e
     | isFullError e = putStrLn "There is not enough diskspace available!"
     | otherwise = ioError e
     where fileName = ioeGetFileName e
-    -}
+    

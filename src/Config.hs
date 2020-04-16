@@ -15,9 +15,10 @@ import Data.Aeson.Types (parseMaybe)
 import Data.Maybe (fromMaybe)
 import Data.Aeson.Text
 import System.Environment
-import Control.Exception.Base (catch, throw, throwIO)
+import Control.Exception.Base (catch, throw, throwIO, try, SomeException)
 import Logger
-import Exception (ConfigError(..))
+import Control.Monad.Writer.Lazy (Writer)
+import Control.Monad.RWS.Class (tell)
 
 
 
@@ -28,8 +29,8 @@ data Logger = Logger
           showToConsole :: Int
         }  deriving (Show)
 
-data Config' = Config' { logger :: [Logger]} deriving (Show)
-data Config = Either String Config'
+newtype Config = Config{logger :: [Logger]} deriving (Show)
+--data Config = Either String Config'
 
 options = Logger {pathToLog = "./out", maxSizeLog = 1 , showToConsole = 1}
 
@@ -41,39 +42,34 @@ instance FromJSON Logger where
                <*> v .:? "showToConsole" .!= showToConsole options
     parseJSON _ = mzero
 
-instance FromJSON Config' where
+instance FromJSON Config where
       parseJSON (Object o) = 
-          Config' <$> o .: "logger"  
+          Config <$> o .: "logger"  
       parseJSON _ = mzero     
 
 
+warning = ", default values will be used!"
 
-readConfig :: IO Config
-
+readConfig :: IO (Either String Config)
 readConfig = do
-               path <- getArgs
-               return( case path of
-                      [] -> Left  "uiiouoiu"
-                      [_] -> Right head Path do 
-                                    json <- B.readFile path 
-                                    return())
-                                      
-                      
+             path <- getArgs
+             case path of
+                  []  -> return $ Left ("no config set" ++ warning)
+                  [_] -> do
+                         json <- try (B.readFile $ head path) :: IO (Either SomeException B.ByteString)
+                         case json of
+                           Left e -> return $ Left(show e ++ warning)
+                           Right context-> do
+                             let result = decodeStrict context :: Maybe Config
+                             case result of
+                                 Nothing     -> return $ Left ("Invalid config fail" ++ warning)
+                                 Just config -> return $ Right config
 
- {--              
-getPath = do
-  
-readConfig = do
-             return(        
-              case getPath of
-                Left  msg -> Left msg
-                Right path -> Right do 
-                            rawJSON <- B.readFile path 
-                            let result = decodeStrict rawJSON :: Maybe [Config]
-                            putStrLn $ case result of
-                                   Nothing    -> "Invalid JSON!"
-                                   Just config -> show  config )
 
+
+
+
+ 
                                
                                                 
         
@@ -81,10 +77,3 @@ readConfig = do
        
                       
                       
-                      {-
-                      let result = decodeStrict drawJSON :: Maybe Config 
-                      o <-  case result of
-                            Nothing   ->  "Invalid JSON!"
-                            Just content -> show content
-                        -}    
-                        --}
