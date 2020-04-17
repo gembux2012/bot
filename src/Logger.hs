@@ -13,8 +13,9 @@ import Data.Time (getZonedTime, formatTime,defaultTimeLocale)
 
 data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
 
-logX :: String -> Priority -> String ->  IO ()
+initLoger setings = 
 
+logX :: String -> Priority -> String ->  IO ()
 logX fName priority msg =
   getZonedTime >>= \t ->
     appendFile fName (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t ++ " " ++ show priority ++ " " ++ msg ++ "\n")
