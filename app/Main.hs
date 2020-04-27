@@ -5,17 +5,20 @@ import Exception
 
 import Control.Exception.Base (catch)      
 
+getSetting = do
+              set <- settings
+              putStrLn $ fst set
+              initLogger $   logger( snd set)
+              
 main = do
-       config <- readConfig
-       putStrLn $ case config of
-                  Left str  ->  str 
-                  Right cfg -> show cfg
-     
-        
-     -- logI "todo.txt" "bot start"
-   
-
-  
+        getSetting        
+        logI "todo.txt" "bot start"
+         
+       
+lo= snd set
+initLogger  config = putStrLn $ pathToLog config 
+                      
+--v= Config.logger snd(getSetting)   
 {-   
 fromList [("ip",String "127.0.0.1"),("social",Object
             (fromList [("GitHub",Object 

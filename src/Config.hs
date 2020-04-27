@@ -4,7 +4,9 @@
 
 module Config 
   (
-     readConfig,
+     settings,
+     Config(..),
+     Logger(..)
      ) where 
 
 import qualified Data.ByteString as B
@@ -26,20 +28,22 @@ data Logger = Logger
         {
           pathToLog     :: String,
           maxSizeLog    :: Int,
+          nameLog       :: String, 
           showToConsole :: Int
         }  deriving (Show)
 
-newtype Config = Config{logger :: [Logger]} deriving (Show)
+newtype Config = Config{logger :: Logger} deriving (Show)
 --data Config = Either String Config'
 
-options = Logger {pathToLog = "./out", maxSizeLog = 1 , showToConsole = 1}
-
+loggerDefault = Logger {pathToLog = "./out", maxSizeLog = 1, nameLog = "", showToConsole = 1}
+settingsDefault = Config loggerDefault
 
 instance FromJSON Logger where
     parseJSON (Object v) =
-        Logger <$> v .:? "pathToLog"     .!= pathToLog options
-               <*> v .:? "maxSizeLog"    .!= maxSizeLog options
-               <*> v .:? "showToConsole" .!= showToConsole options
+        Logger <$> v .:? "pathToLog"     .!= pathToLog loggerDefault
+               <*> v .:? "maxSizeLog"    .!= maxSizeLog loggerDefault
+               <*> v .:? "nameLog"       .!= nameLog loggerDefault
+               <*> v .:? "showToConsole" .!= showToConsole loggerDefault
     parseJSON _ = mzero
 
 instance FromJSON Config where
@@ -65,7 +69,12 @@ readConfig = do
                                  Nothing     -> return $ Left ("Invalid config fail" ++ warning)
                                  Just config -> return $ Right config
 
-
+settings:: IO (String, Config)
+settings =do 
+          settings <- readConfig
+          case settings of
+           Left val -> return (val, settingsDefault)
+           Right cfg -> return ("" , cfg)
 
 
 

@@ -13,7 +13,7 @@ import Data.Time (getZonedTime, formatTime,defaultTimeLocale)
 
 data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
 
-initLoger setings = 
+
 
 logX :: String -> Priority -> String ->  IO ()
 logX fName priority msg =
