@@ -5,18 +5,16 @@ import Exception
 
 import Control.Exception.Base (catch)      
 
-getSetting = do
-              set <- settings
-              putStrLn $ fst set
-              initLogger $   logger( snd set)
               
-main = do
-        getSetting        
-        logI "todo.txt" "bot start"
+main =  do
+             logI "./out/bot.log" "bot start"
+             config <- readConfig
+             putStrLn $ fst config
+             loggerInit $ snd config
+        
          
        
-lo= snd set
-initLogger  config = putStrLn $ pathToLog config 
+ 
                       
 --v= Config.logger snd(getSetting)   
 {-   

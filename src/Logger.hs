@@ -2,14 +2,16 @@ module Logger
 ( logI,
   logE,
   logN,
-  logW   
+  logW ,
+  loggerInit  
     ) where
 import System.IO
 import Control.Exception
 import Data.Time (getZonedTime, formatTime,defaultTimeLocale)
+import Config 
 
-
-
+loggerInit config = putStrLn $ show config
+--fName = pathToLog Logger Config
 
 data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
 

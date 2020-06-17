@@ -4,9 +4,10 @@
 
 module Config 
   (
-     settings,
+    
      Config(..),
-     Logger(..)
+     Logger(..),
+     readConfig
      ) where 
 
 import qualified Data.ByteString as B
@@ -18,7 +19,6 @@ import Data.Maybe (fromMaybe)
 import Data.Aeson.Text
 import System.Environment
 import Control.Exception.Base (catch, throw, throwIO, try, SomeException)
-import Logger
 import Control.Monad.Writer.Lazy (Writer)
 import Control.Monad.RWS.Class (tell)
 
@@ -32,7 +32,7 @@ data Logger = Logger
           showToConsole :: Int
         }  deriving (Show)
 
-newtype Config = Config{logger :: Logger} deriving (Show)
+data Config = Config {logger :: Logger} deriving (Show)
 --data Config = Either String Config'
 
 loggerDefault = Logger {pathToLog = "./out", maxSizeLog = 1, nameLog = "", showToConsole = 1}
@@ -53,28 +53,24 @@ instance FromJSON Config where
 
 
 warning = ", default values will be used!"
-
-readConfig :: IO (Either String Config)
+                    
+readConfig :: IO (String,Config)
 readConfig = do
+             
              path <- getArgs
              case path of
-                  []  -> return $ Left ("no config set" ++ warning)
+             
+                  []  ->  return $ ("Warning! no config set" ++ warning, settingsDefault)
                   [_] -> do
                          json <- try (B.readFile $ head path) :: IO (Either SomeException B.ByteString)
                          case json of
-                           Left e -> return $ Left(show e ++ warning)
+                           Left e -> return $ (show e ++ warning, settingsDefault)
                            Right context-> do
                              let result = decodeStrict context :: Maybe Config
                              case result of
-                                 Nothing     -> return $ Left ("Invalid config fail" ++ warning)
-                                 Just config -> return $ Right config
+                                 Nothing     -> return $ ("Warning! Invalid config fail" ++ warning, settingsDefault)
+                                 Just config -> return $ ("", config)
 
-settings:: IO (String, Config)
-settings =do 
-          settings <- readConfig
-          case settings of
-           Left val -> return (val, settingsDefault)
-           Right cfg -> return ("" , cfg)
 
 
 

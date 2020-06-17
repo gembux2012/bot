@@ -1,5 +1,5 @@
 {
-  "logger": [
+  "logger":
     {
       "pathToLog": "",
       "maxSizeLog": 100,
