@@ -10,7 +10,10 @@ main =  do
              logI "./out/bot.log" "bot start"
              config <- readConfig
              putStrLn $ fst config
-             loggerInit $ snd config
+             let cfg =  snd config
+             return ()
+             --let l g = Logger 
+             putStrLn  $  show $ logger cfg 
         
          
        

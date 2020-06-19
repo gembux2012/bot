@@ -32,18 +32,18 @@ data Logger = Logger
           showToConsole :: Int
         }  deriving (Show)
 
-data Config = Config {logger :: Logger} deriving (Show)
+data Config = Config {logger ::Logger} deriving(Show)
 --data Config = Either String Config'
 
 loggerDefault = Logger {pathToLog = "./out", maxSizeLog = 1, nameLog = "", showToConsole = 1}
-settingsDefault = Config loggerDefault
+settingsDefault = Config loggerDefault 
 
 instance FromJSON Logger where
-    parseJSON (Object v) =
-        Logger <$> v .:? "pathToLog"     .!= pathToLog loggerDefault
-               <*> v .:? "maxSizeLog"    .!= maxSizeLog loggerDefault
-               <*> v .:? "nameLog"       .!= nameLog loggerDefault
-               <*> v .:? "showToConsole" .!= showToConsole loggerDefault
+    parseJSON (Object logger) =
+        Logger <$> logger .:? "pathToLog"     .!= pathToLog loggerDefault
+               <*> logger .:? "maxSizeLog"    .!= maxSizeLog loggerDefault
+               <*> logger .:? "nameLog"       .!= nameLog loggerDefault
+               <*> logger .:? "showToConsole" .!= showToConsole loggerDefault
     parseJSON _ = mzero
 
 instance FromJSON Config where
@@ -69,7 +69,7 @@ readConfig = do
                              let result = decodeStrict context :: Maybe Config
                              case result of
                                  Nothing     -> return $ ("Warning! Invalid config fail" ++ warning, settingsDefault)
-                                 Just config -> return $ ("", config)
+                                 Just cfg -> return $ ("", cfg)
 
 
 

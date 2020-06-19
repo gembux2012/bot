@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 543a74a476e06d971a267c9bcf7dfab1e0ad00e40a277c7ed5e4ca20a91c5cd9
+-- hash: ba40edad33544975c1a158ac0684e52de70b7e5eb5a88061e45faf014f280a73
 
 name:           bot
 version:        0.1.0.0
@@ -31,6 +31,7 @@ library
       Exception
       Lib
       Logger
+      ReadJson
   other-modules:
       Paths_bot
   hs-source-dirs:

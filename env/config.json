@@ -1,9 +1,10 @@
 {
-  "logger":
+  "logger":[
     {
-      "pathToLog": "",
+      "pathToLog": "./env",
       "maxSizeLog": 100,
-      "showToConsole": 1
+      "showToConsole": 1,
+      "nameLog" : "bot.log"
     }
   ]
 }
