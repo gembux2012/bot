@@ -36,7 +36,7 @@ data Config = Config {logger ::Logger} deriving(Show)
 --data Config = Either String Config'
 
 loggerDefault = Logger {pathToLog = "./out", maxSizeLog = 1, nameLog = "", showToConsole = 1}
-settingsDefault = Config loggerDefault 
+settingsDefault = Config loggerDefault
 
 instance FromJSON Logger where
     parseJSON (Object logger) =
