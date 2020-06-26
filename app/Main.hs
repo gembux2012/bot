@@ -11,7 +11,7 @@ main =  do
              cfg <-  readConfig
              putStrLn $ show (fst cfg)
               
-getConfig cfg               
+getConfig $ Just (snd cfg)               
         
          
        

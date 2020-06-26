@@ -65,12 +65,8 @@ readConfig = do
                          json <- try (B.readFile $ head path) :: IO (Either SomeException B.ByteString)
                          case json of
                            Left e -> return $ (show e ++ warning, Nothing )
-                           Right context-> do
-                             let result = decodeStrict context :: Maybe Object
-                             case result of
-                                 Nothing     -> return $ ("Warning! Invalid config fail" ++ warning, Nothing)
-                                 Just rawJson -> return ("", Just rawJson)
-
+                           Right context-> return $ ("", Just rawJson)
+                                 
 
 
 

@@ -9,10 +9,12 @@ import System.IO
 import Control.Exception
 import Data.Time (getZonedTime, formatTime,defaultTimeLocale)
 import Control.Lens.Combinators (preview)
+import Data.Aeson.Lens (key, _String)
 
 
-getConfig cfg =  Just (snd cfg)
-preview (key "loger") getConfig
+getConfig  = preview (key "logger". _String  )
+   
+
 --fName = pathToLog Logger Config
 
 data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
