@@ -8,16 +8,19 @@ module Logger
 import System.IO
 import Control.Exception
 import Data.Time (getZonedTime, formatTime,defaultTimeLocale)
-import Config 
+import Control.Lens.Combinators (preview)
 
---loggerInit config = putStrLn $  Logger config
+
+getConfig cfg =  Just (snd cfg)
+preview (key "loger") getConfig
 --fName = pathToLog Logger Config
 
 data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
 
 
 
-logX :: String -> Priority -> String ->  IO ()
+logX
+ :: String -> Priority -> String ->  IO ()
 logX fName priority msg =
   getZonedTime >>= \t ->
     appendFile fName (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t ++ " " ++ show priority ++ " " ++ msg ++ "\n")

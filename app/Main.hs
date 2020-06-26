@@ -4,16 +4,14 @@ import Config
 import Exception
 
 import Control.Exception.Base (catch)      
-
-              
+import Utility
+             
 main =  do
              logI "./out/bot.log" "bot start"
-             config <- readConfig
-             putStrLn $ fst config
-             let cfg =  snd config
-             return ()
-             --let l g = Logger 
-             putStrLn  $  show $ logger cfg 
+             cfg <-  readConfig
+             putStrLn $ show (fst cfg)
+              
+getConfig cfg               
         
          
        

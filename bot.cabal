@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ba40edad33544975c1a158ac0684e52de70b7e5eb5a88061e45faf014f280a73
+-- hash: 7faedff9c90849c6b0bfe35afbfa5e61caadcdc633da4b27d270b897b33f849b
 
 name:           bot
 version:        0.1.0.0
@@ -31,7 +31,7 @@ library
       Exception
       Lib
       Logger
-      ReadJson
+      Utility
   other-modules:
       Paths_bot
   hs-source-dirs:
@@ -41,7 +41,11 @@ library
     , base >=4.13 && <5
     , bytestring
     , containers
+    , http-conduit
+    , lens
+    , lens-aeson
     , mtl
+    , text
     , time
   default-language: Haskell2010
 
@@ -58,7 +62,11 @@ executable bot-exe
     , bot
     , bytestring
     , containers
+    , http-conduit
+    , lens
+    , lens-aeson
     , mtl
+    , text
     , time
   default-language: Haskell2010
 
@@ -76,6 +84,10 @@ test-suite bot-test
     , bot
     , bytestring
     , containers
+    , http-conduit
+    , lens
+    , lens-aeson
     , mtl
+    , text
     , time
   default-language: Haskell2010

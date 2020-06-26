@@ -5,9 +5,9 @@
 module Config 
   (
     
-     Config(..),
-     Logger(..),
-     readConfig
+    -- Config(..),
+    -- Logger(..),
+    readConfig
      ) where 
 
 import qualified Data.ByteString as B
@@ -22,7 +22,7 @@ import Control.Exception.Base (catch, throw, throwIO, try, SomeException)
 import Control.Monad.Writer.Lazy (Writer)
 import Control.Monad.RWS.Class (tell)
 
-
+{--
 
 data Logger = Logger
         {
@@ -47,29 +47,29 @@ instance FromJSON Logger where
     parseJSON _ = mzero
 
 instance FromJSON Config where
-      parseJSON (Object o) = 
+      parseJSON (Object o) = ``
           Config <$> o .: "logger"  
       parseJSON _ = mzero     
-
+--}
 
 warning = ", default values will be used!"
                     
-readConfig :: IO (String,Config)
+readConfig :: IO (String,Maybe Object)
 readConfig = do
              
              path <- getArgs
              case path of
              
-                  []  ->  return $ ("Warning! no config set" ++ warning, settingsDefault)
+                  []  ->  return  ("Warning! no config set" ++ warning,Nothing)
                   [_] -> do
                          json <- try (B.readFile $ head path) :: IO (Either SomeException B.ByteString)
                          case json of
-                           Left e -> return $ (show e ++ warning, settingsDefault)
+                           Left e -> return $ (show e ++ warning, Nothing )
                            Right context-> do
-                             let result = decodeStrict context :: Maybe Config
+                             let result = decodeStrict context :: Maybe Object
                              case result of
-                                 Nothing     -> return $ ("Warning! Invalid config fail" ++ warning, settingsDefault)
-                                 Just cfg -> return $ ("", cfg)
+                                 Nothing     -> return $ ("Warning! Invalid config fail" ++ warning, Nothing)
+                                 Just rawJson -> return ("", Just rawJson)
 
 
 
@@ -82,3 +82,4 @@ readConfig = do
        
                       
                       
+--}
