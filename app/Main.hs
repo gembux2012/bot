@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 import Logger
 import Config
@@ -6,13 +8,15 @@ import Exception
 import Control.Exception.Base (catch)      
 import Utility
              
-main =  do
-             logI "./out/bot.log" "bot start"
-             cfg <-  readConfig
-             putStrLn $ show (fst cfg)
-              
-getConfig $ Just (snd cfg)               
-        
+
+
+main = do
+  logI "./out/bot.log" "bot start"
+  cfg <- readConfig
+  print $ fst cfg
+  initConfig  $ snd cfg
+  --getConfig  (snd cfg)
+
          
        
  

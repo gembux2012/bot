@@ -10,7 +10,7 @@ module Config
     readConfig
      ) where 
 
-import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as B
 import           Control.Monad (mzero)
 import           Control.Monad.Reader
 import           Data.Aeson
@@ -54,18 +54,16 @@ instance FromJSON Config where
 
 warning = ", default values will be used!"
                     
-readConfig :: IO (String,Maybe Object)
+readConfig :: IO (String,  Maybe  B.ByteString)
 readConfig = do
-             
-             path <- getArgs
-             case path of
-             
-                  []  ->  return  ("Warning! no config set" ++ warning,Nothing)
-                  [_] -> do
-                         json <- try (B.readFile $ head path) :: IO (Either SomeException B.ByteString)
-                         case json of
-                           Left e -> return $ (show e ++ warning, Nothing )
-                           Right context-> return $ ("", Just rawJson)
+  path <- getArgs
+  case path of
+    [] -> return ("Warning! no config set" ++ warning, Nothing)
+    [_] -> do
+      content <- try (B.readFile $ head path) :: IO (Either SomeException B.ByteString)
+      case content of
+        Left e -> return $ (show e ++ warning, Nothing)
+        Right content -> return ("Config found", Just content)
                                  
 
 
