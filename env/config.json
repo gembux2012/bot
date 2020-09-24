@@ -1,8 +1,12 @@
 {
-  "logger":{
-      "pathToLog": "./env",
+  "log":{
+      "pathToLog": "/env",
       "maxSizeLog": 100,
       "showToConsole": 1,
-      "nameLog" : "bot.log"
-    }
+      "nameLogInfo" : "/bot.info.log"
+    },
+  "base": {
+    "driver": "odbc"
+
+  }
 }

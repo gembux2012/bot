@@ -30,6 +30,7 @@ dependencies:
 - lens-aeson
 - text
 - http-conduit
+- data-has
 library:
   source-dirs: src
 

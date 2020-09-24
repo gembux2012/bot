@@ -1,49 +1,66 @@
-{-# LANGUAGE OverloadedStrings #-}
+
+
+--{-# LANGUAGE FlexibleContexts #-}
 
 module Logger
-( logI,
-  logE,
-  logN,
-  logW ,
-  initConfig  
+( --logI,
+  --logE,
+  
+ -- initLogger1,
+     
     ) where
 import System.IO
 import Control.Exception
 import Data.Time (getZonedTime, formatTime,defaultTimeLocale)
-import Control.Lens.Combinators (preview)
+import Control.Lens (preview, (&))
 import Data.Aeson.Lens (key, _String)
-import Data.Text.Internal.Lazy (Text)
+import Data.Aeson
+--import Data.Text.Internal.Lazy (Text)
 import qualified Data.ByteString.Char8         as BS
+import           Data.Text                      ( Text, unpack, )
+import qualified Data.Text.IO                  as TIO
+import Data.Maybe 
+import Config
 
-
-data Logger = Logger
-        {
-          pathToLog     :: String,
-          maxSizeLog    :: Int,
-          nameLog       :: String, 
-          showToConsole :: Int
-        }  deriving (Show)
-loggerDefault = Logger {pathToLog = "./out", maxSizeLog = 1, nameLog = "", showToConsole = 1}
-
-
-getRate :: BS.ByteString -> Maybe Text
-getRate = preview (key "bpi" . key "USD" . key "rate" . _String)
-
-initConfig(Just cfg) =do
-                       cfg
-            --initConfig (Just cfg) = print   $  preview (key "logger" . key "pathToLog"._String) cfg
-                                              
-    --where setLog =preview (key "logger" . key "pathToLog"._String)   
 
 data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
 
+tD  =   getZonedTime >>= \t ->   
+                return  (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
+
+logY a = do
+        t <- tD      
+        putStrLn t
+        
+--logI msg  = logX msg  INFO
+
+--initLogger1 (Config Logger {nameLogInfo = path})= path
+ --  logX :: String-> Priority -> String ->  IO ()
+   
+  --logI msg  = logY  INFO
+
+--logN fName = logX fName NOTICE
+--logW fName = logX fName WARNING
+--logE fName = logX fName ERROR
 
 
-logX :: String -> Priority -> String ->  IO ()
-logX fName priority msg =   getZonedTime >>= \t ->   
-              appendFile fName (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t ++ " " ++ show priority ++ " " ++ msg ++ "\n")
+--getPath:: BS.ByteString -> Maybe Text
+--getPath = preview (key "logger". key "pathToLog". _String)
 
-logI fName = logX fName INFO
-logN fName = logX fName NOTICE
-logW fName = logX fName WARNING
-logE fName = logX fName ERROR
+--initLogger1 config  = print $ config 
+--initLogger1 (Config (Logger path logSize logFilename printInConsole)) = logFilename = fName 
+
+{--
+initLogger  cfg  =  case  getPath cfg of
+                              Nothing   -> putStrLn "Path not set"
+                              Just  path -> print $ log   (unpack path) 
+                              where  log path =Logger {pathToLog =   path, maxSizeLog = 1, nameLog = "", showToConsole = 1}
+--}                            
+ 
+
+--searchKeyFromJson:: BS.ByteString-> IO()
+--searchKeyFromJson cfg   =print $ searchKey cfg   
+          
+--searchKeyFromJson keyString  cfg = return $ searchKey cfg     
+--        where searchKey = preview(keyString)
+

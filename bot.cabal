@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7faedff9c90849c6b0bfe35afbfa5e61caadcdc633da4b27d270b897b33f849b
+-- hash: cf65d23b09321c08827c3921ed06433b12effd895622a93cc386d93252e86b43
 
 name:           bot
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       Config
       Exception
       Lib
+      Log
       Logger
       Utility
   other-modules:
@@ -41,6 +42,7 @@ library
     , base >=4.13 && <5
     , bytestring
     , containers
+    , data-has
     , http-conduit
     , lens
     , lens-aeson
@@ -62,6 +64,7 @@ executable bot-exe
     , bot
     , bytestring
     , containers
+    , data-has
     , http-conduit
     , lens
     , lens-aeson
@@ -84,6 +87,7 @@ test-suite bot-test
     , bot
     , bytestring
     , containers
+    , data-has
     , http-conduit
     , lens
     , lens-aeson
