@@ -9,11 +9,12 @@
 
 module Config 
   (
-    
+
     Config(..),
-    Log(..),
+    LogOpts(..),
+    Base(..),
     readConfig1,
-    
+
     --searchKeyFromJson
      ) where 
 
@@ -36,35 +37,42 @@ import GHC.Generics (Generic)
 
 
 
-data Log = Log
+data LogOpts = LogOpts
         {
           pathToLog     :: String,
           maxSizeLog    :: Int,
-          nameLogInfo       :: String, 
+          nameLogInfo       :: String,
           showToConsole :: Int
         }  deriving (Generic, FromJSON, Show)
 
-data Config = Config {log ::Log
-                        
-                        } deriving (Generic, FromJSON, Show)
+data Base =Base
+   {
+     driver :: String
+   } deriving (Generic, FromJSON, Show)
 
-{--                        
-instance FromJSON Config where
-      parseJSON (Object o) = 
-          Config <$> o .: "log"  
-      parseJSON _ = mzero                             
+data Config  = Config {logOpts ::LogOpts
+                      , base :: Base
+                       } deriving (Generic, FromJSON, Show)
 
---}
+
 warning = ", default values will be used!"
-
+{--
 class Monad m => Conf m where
-  initConfig:: m (String ,Config)
-  
-data Configuration m = Configuration
-  {
-   doConfiguration :: Config -> m ()
+  confLn :: m (Either String Config)
+
+data Configure m = Configure
+  { doConfigure ::  m (Either String Config)
+
   }
-                      
+
+instance
+  ( Has (Configure m) r
+  , Monad m
+  ) => Conf (ReaderT r m) where
+  confLn =
+    asks getter >>= \(Configure doConf  ) -> lift $ doConf  readConfig1
+--}
+
 readConfig :: IO (Either String BS.ByteString)
 
 readConfig = do
@@ -89,8 +97,8 @@ readConfig1 =  do
                        Left e -> return $ Left (show e ++ warning)
                        Right content ->  case decodeStrict content:: Maybe Config of
                                          Just config -> return $ Right config
-                                         Nothing     -> return $ Left ("Invalid Json! " ++ warning)    
-                         
+                                         Nothing     -> return $ Left ("Invalid Json! " ++ warning)
+
 --readConfig1 :: IO (String ,Config)
 {--
 getConfig1 =  do
@@ -104,30 +112,30 @@ getConfig1 =  do
                        Right content ->  case decodeStrict content:: Maybe Config of
                                          Just con ->setconfig
                                          Nothing  -> setconfig
-                                         where setconfig =     
-                         
+                                         where setconfig =
+
                                                                                 --}
-      
-      
-      
-      
-      
+
+
+
+
+
         {--
         do
            let result = decodeStrict content :: Maybe Object
            case result of
               Nothing   -> return ("Invalid JSON!", Nothing)
               Just object -> return ("Config found",  Just object)
-           --}  
+           --}
 
 
 
- 
-                               
-                                                
-        
-             
-       
-                      
-                      
+
+
+
+
+
+
+
+
 --}

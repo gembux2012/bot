@@ -25,8 +25,8 @@ import Config
 
 data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
 
-tD  =   getZonedTime >>= \t ->   
-                return  (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
+tD  =   getZonedTime >>= \t ->    
+                return   (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
 
 logY a = do
         t <- tD      
