@@ -6,13 +6,14 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main where
 import           Config               (Base (..), Config (..), LogOpts (..),
-                                       readConfig1)
+                                       readConfig1,  )
 import Exception
 import           Log                  (Log (..), Logger (..), Priority (..),
-                                       logLn,logLnInit,
+                                       logLn,logLnInit,defaultLogOpts
 
 
                                         )
@@ -30,50 +31,40 @@ import           GHC.Stack            (HasCallStack, callStack)
 
 
 app   =   Application
-                  { config= do config <- readConfig1
-                    ,
+                  { 
                     logger = Logger   {
                                         dologLn =
-                                        \logOpt  a -> do
-                                        let  logFileName =  nameLogInfo  logOpt
-                                        appendFile (show logFileName) $  unpack a
+                                        \LogOpts{..}  a -> do
+                                        appendFile (show nameLogInfo) $  unpack a
                                         putStrLn $  unpack a
                                         putStrLn (prettyCallStack callStack)
-                                       , logOpt =logLn (logOpts config ) 
-                                      }
+                    
+                  }
                   }
 
 
   
 
 main :: IO ()
-main =do 
-        config <- readConfig1
-        case config of
-                Left  error -> log'  error
-                Right conf  -> let    
+main =  runReaderT (api "jkl")  app
        
-logLni c a = runReaderT (logLn (logOpts c) a) app
-logL c =logLni c
-log' a = logL a                  
---logLn:: Log m =>Either String Config ->(Either String LogOpts)
 
---logLn' = logLn $ logOpts conf
 
---api :: Log.Log m => Either String Config -> m ()
-
-api config = case config of
-        Left  error ->logLn  error
-        --Right (Config (Log nameLogInf _ _ _ ) _ )   -> logLnI $ pack (show nameLogInf )
-        Right conf  ->logLn (logOpts conf) 
-             
+api str  = do
+   conf <- readConfig1 
+   case conf of
+    Left  error -> defaultApp  error
+    Right conf  -> initApp conf  "ok"
+ 
+initApp Config{..} str = logLn logOpts str 
+defaultApp str = logLn defaultLogOpts str 
+               
 
 
 data Application m = Application
  {
-   logger ::Logger m
-  
-
+   config ::  Config
+  ,logger ::Logger m
  }
    deriving stock (Generic)
 

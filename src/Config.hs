@@ -56,22 +56,9 @@ data Config  = Config {logOpts ::LogOpts
 
 
 warning = ", default values will be used!"
-{--
-class Monad m => Conf m where
-  confLn :: m (Either String Config)
 
-data Configure m = Configure
-  { doConfigure ::  m (Either String Config)
 
-  }
 
-instance
-  ( Has (Configure m) r
-  , Monad m
-  ) => Conf (ReaderT r m) where
-  confLn =
-    asks getter >>= \(Configure doConf  ) -> lift $ doConf  readConfig1
---}
 
 readConfig :: IO (Either String BS.ByteString)
 
