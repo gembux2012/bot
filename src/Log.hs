@@ -1,79 +1,74 @@
-{-# LANGUAGE FlexibleContexts     #-}
-{-# LANGUAGE OverloadedStrings    #-}
-{-# LANGUAGE RankNTypes           #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MonoLocalBinds #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Log
-   ( Loggable(..)
-    , Log(..)
-    , Logger(..)
-    , Priority(..)
-    , logLn
-    ,logLnInit
-    , defaultLogOpts
+  ( Loggable (..),
+    Log (..),
+    Logger (..),
+    Priority (..),
+    logLn,
+    
+    --defaultLogOpts,
+    SetOpts,
+  )
+where
 
-    )  where
+import Config (Config, LogOpts (..), logOpts)
+import Control.Monad.Reader (ReaderT, lift)
+import Control.Monad.Reader.Class (asks)
+import Data.Has (Has (..))
+import Data.Text (Text, append, pack, unpack)
+import Data.Time.Format (defaultTimeLocale, formatTime)
+import Data.Time.LocalTime (LocalTime, ZonedTime, getZonedTime)
+import GHC.Stack (HasCallStack)
+import Prelude
 
-import           Prelude
-
-import           Config (LogOpts(..), Config,  logOpts )                    
-import           Control.Monad.Reader       (ReaderT, lift)
-import           Control.Monad.Reader.Class (asks)
-import           Data.Has                   (Has (..))
-import           Data.Text                  (Text, append, pack, unpack)
-import           GHC.Stack                  (HasCallStack)
-import Data.Time.LocalTime (getZonedTime, LocalTime, ZonedTime)
-import Data.Time.Format (formatTime, defaultTimeLocale)
-
-
- 
 class Loggable a where
   fromLoggable :: a -> Text
-  
 
 class Monad m => Log m where
-  logLn :: HasCallStack =>Loggable a => LogOpts->a -> m ()
-  logLnInit ::  LogOpts -> ReaderT r m () 
+  logLn :: HasCallStack => Loggable a => a -> m ()
   
-
-data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
-
-
-
 data Logger m = Logger
-  { dologLn :: HasCallStack =>LogOpts-> Text -> m ()
-   
-    -- 
+  { dologLn :: HasCallStack => Text -> m ()
   }
   
-defaultLogOpts = LogOpts 
-           { pathToLog = ""
-            ,maxSizeLog = 1
-            ,nameLogInfo = "bot.log"
-            ,showToConsole =1 
-            }  
+
+--logLnInit ::  LogOpts ;
+
+data Priority = INFO | NOTICE | WARNING | ERROR deriving (Show)
+
+newtype SetOpts m = SetOpts {logOpt :: LogOpts -> Text -> m ()}
+
+
+{--
+defaultLogOpts =
+  LogOpts
+    { pathToLog = "kjk",
+      nameLogInfo = "bot.log"
+     
+    }
+--}
+
+
+
 
 instance
-  ( Has (Logger m) r
-  , Monad m
-  
-  ) => Log (ReaderT r m) where
-  --logLnInit c  =
-    --asks getter >>= \(Logger doLog ) -> lift $ doLog c   
-                                                                      
-  logLn logOpt a = do
-    (Logger  doLog  ) <- asks getter
-    lift $ doLog  logOpt  (fromLoggable a) 
-  
- 
-
-instance Loggable Text  where
+  ( Has (Logger m) r,
+    Monad m
+  ) =>
+  Log (ReaderT r m)
+  where
+   logLn a =
+      asks getter >>= \(Logger doLog) -> lift . doLog . fromLoggable $ a
+      
+instance Loggable Text where
   fromLoggable = id
 
-instance Loggable Priority where
-  fromLoggable =  pack.show
-  
-
+--instance Loggable Priority where
+--  fromLoggable = pack . show

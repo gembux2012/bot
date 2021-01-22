@@ -1,6 +1,8 @@
 
-
+{-# LANGUAGE RecordWildCards #-}
 --{-# LANGUAGE FlexibleContexts #-}
+
+{-# LANGUAGE BlockArguments #-}
 
 module Logger
 ( --logI,
@@ -9,7 +11,7 @@ module Logger
  -- initLogger1,
      
     ) where
-import System.IO
+--import System.IO
 import Control.Exception
 import Data.Time (getZonedTime, formatTime,defaultTimeLocale)
 import Control.Lens (preview, (&))
@@ -25,42 +27,21 @@ import Config
 
 data Priority =  INFO | NOTICE | WARNING | ERROR deriving (Show)
 
-tD  =   getZonedTime >>= \t ->    
-                return   (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
+newtype Handle m
+  = Handle
+      { writeLog :: String -> m ()
+      }
 
-logY a = do
-        t <- tD      
-        putStrLn t
-        
---logI msg  = logX msg  INFO
+logX :: LogOpts ->String -> Handle IO
+logX  options str = Handle {writeLog = \log  -> print log}
 
---initLogger1 (Config Logger {nameLogInfo = path})= path
- --  logX :: String-> Priority -> String ->  IO ()
-   
-  --logI msg  = logY  INFO
+logInit  opt   = do
+   let str = "ok"
+   let handle  = Handle {writeLog = writeLog (logX opt str)}
+   logOut handle "ok"
 
---logN fName = logX fName NOTICE
---logW fName = logX fName WARNING
---logE fName = logX fName ERROR
+logOut :: Monad m => Handle m -> String -> m ()
+logOut Handle {..} str = writeLog str
 
-
---getPath:: BS.ByteString -> Maybe Text
---getPath = preview (key "logger". key "pathToLog". _String)
-
---initLogger1 config  = print $ config 
---initLogger1 (Config (Logger path logSize logFilename printInConsole)) = logFilename = fName 
-
-{--
-initLogger  cfg  =  case  getPath cfg of
-                              Nothing   -> putStrLn "Path not set"
-                              Just  path -> print $ log   (unpack path) 
-                              where  log path =Logger {pathToLog =   path, maxSizeLog = 1, nameLog = "", showToConsole = 1}
---}                            
- 
-
---searchKeyFromJson:: BS.ByteString-> IO()
---searchKeyFromJson cfg   =print $ searchKey cfg   
-          
---searchKeyFromJson keyString  cfg = return $ searchKey cfg     
---        where searchKey = preview(keyString)
-
+logY str = logOut Handle {..} str
+  

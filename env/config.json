@@ -1,12 +1,11 @@
 {
-  "log":{
-      "pathToLog": "/env",
-      "maxSizeLog": 100,
-      "showToConsole": 1,
-      "nameLogInfo" : "/bot.info.log"
-    },
-  "base": {
-    "driver": "odbc"
+  "logOpts":{
+    "pathToLog": "/env",
+    "nameLogInfo" : "/bot.info.log"
+  },
+  "subd": {
+    "driver": "odbc",
+    "password" : "Password00"
 
   }
 }

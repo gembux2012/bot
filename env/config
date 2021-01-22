@@ -1,1 +1,5 @@
-sfqsef
+{
+  "log":{
+    "pathToLog": "/env",
+    }
+}

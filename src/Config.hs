@@ -12,7 +12,7 @@ module Config
 
     Config(..),
     LogOpts(..),
-    Base(..),
+    Subd(..),
     readConfig1,
 
     --searchKeyFromJson
@@ -39,20 +39,20 @@ import GHC.Generics (Generic)
 
 data LogOpts = LogOpts
         {
-          pathToLog     :: String,
-          maxSizeLog    :: Int,
-          nameLogInfo       :: String,
-          showToConsole :: Int
-        }  deriving (Generic, FromJSON, Show)
+          pathToLog  :: String,
+          nameLogInfo:: String
+          
+        }  deriving (Generic, ToJSON, FromJSON, Show)
 
-data Base =Base
+data Subd =Subd
    {
-     driver :: String
-   } deriving (Generic, FromJSON, Show)
+     driver :: String,
+     password :: String
+   } deriving (Generic, ToJSON,FromJSON, Show)
 
 data Config  = Config {logOpts ::LogOpts
-                      , base :: Base
-                       } deriving (Generic, FromJSON, Show)
+                      , subd :: Subd
+                       } deriving (Generic, ToJSON,FromJSON, Show)
 
 
 warning = ", default values will be used!"
@@ -84,7 +84,7 @@ readConfig1 =  do
                        Left e -> return $ Left (show e ++ warning)
                        Right content ->  case decodeStrict content:: Maybe Config of
                                          Just config -> return $ Right config
-                                         Nothing     -> return $ Left ("Invalid Json! " ++ warning)
+                                         Nothing     -> return $ Left ("Invalid Json!! " ++ warning)
 
 --readConfig1 :: IO (String ,Config)
 {--
