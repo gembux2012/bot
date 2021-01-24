@@ -24,7 +24,8 @@ import           Data.Time.Format     (defaultTimeLocale, formatTime)
 import           Data.Time.LocalTime  (getZonedTime)
 import           GHC.Exception        (prettyCallStack)
 import           GHC.Stack            (HasCallStack, callStack)
-import Control.Exception.Base (catch, SomeException)
+import Control.Exception.Base (catch, SomeException, fromException, try)
+import Data.Maybe 
 
 
 
@@ -42,7 +43,10 @@ app   =   Application
                   }
                   }
 --}
-
+appendFile' path str  = catch (appendFile path  str) handler 
+ where
+             handler :: SomeException -> IO ()
+             handler ex = putStrLn $ "Caught exception: " ++ show ex 
 newtype LogOpt
   =LogOpt
     { 
@@ -62,13 +66,16 @@ main =do
                  logger = 
                      Logger {
                               dologLn = \a -> do
-                                 catch (appendFile (pathToLog (logOpts) ++ nameLogInfo(logOpts))  $  unpack a) handler 
+                                 result <- try (appendFile (pathToLog (logOpts) ++ nameLogInfo(logOpts))  $  unpack a):: IO (Either SomeException () ) 
+                                 case result of
+                                          Left ex  -> putStrLn $ "Caught exception: " ++ show ex
+                                          Right val -> return()
+                                  
+                                 --catch (appendFile (pathToLog (logOpts) ++ nameLogInfo(logOpts))  $  unpack a) handler 
                         }
                }
          runReaderT (logLn $ pack "Hi") app
-          where
-            handler :: SomeException -> IO ()
-            handler ex = putStrLn $ "Caught exception: " ++ show ex                          
+                                 
                  
 
 data Application m = Application
