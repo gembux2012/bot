@@ -1,2 +1,2 @@
 /env/bot.info.log: openFile: does not exist (No such file or directory): log will be written to the current director
-error
+errorbot start

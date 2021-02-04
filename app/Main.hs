@@ -25,7 +25,7 @@ import           GHC.Exception          (prettyCallStack)
 import           GHC.Generics           (Generic)
 import           GHC.Stack              (HasCallStack, callStack)
 import           Log                    (Log (..), Logger (..), Priority (..),
-                                         logLn, printLog)
+                                          printLog, logI)
 
 {--
 app   =   Application
@@ -58,21 +58,14 @@ main = do
   conf <- readConfig1
   case conf of
     Left err -> putStrLn err
-    Right Config {..} -> do
-      
+    Right Config{..} -> do
       let app = Application
-            { logger = Logger
-              { {---dologLn = \a -> do
-                  let appendFile' path str = try (appendFile path str) :: IO (Either SomeException ())
-                  result <- appendFile' (pathToLog (logOpts) ++ nameLogInfo (logOpts)) $ unpack a ++ "\n"
-                  case result of
-                   Left ex -> putStrLn $ "Caught exception: " ++ show ex
-                   Right val -> return () --}
-                   dologLn = \a -> printLog (pathToLog (logOpts))  (nameLogInfo (logOpts)) $ unpack a ++ "\n"  
-              }
-            }
-      --runReaderT (logLn $ pack "logger initialized") app
-      runReaderT (logLn $ pack "bot start") app
+                { logger = Logger
+                  { 
+                    dologLn =  printLog  (pathToLog  logOpts)  (nameLogInfo logOpts)    
+                  }
+                }
+      runReaderT (logE  "bot start") app
 
 
 data Application m = Application

@@ -1,20 +1,13 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Log
-  ( Loggable (..),
+  ( 
     Log (..),
     Logger (..),
     Priority (..),
-    --logLn,
-    
-    --defaultLogOpts,
     SetOpts,
     printLog
   )
@@ -24,28 +17,27 @@ import Config (Config, LogOpts (..), logOpts, )
 import Control.Monad.Reader (ReaderT, lift, void)
 import Control.Monad.Reader.Class (asks)
 import Data.Has (Has (..))
-import Data.Text (Text, append, pack, unpack)
+import Data.Text (Text, append, pack, unpack, isInfixOf,)
 import Data.Time.Format (defaultTimeLocale, formatTime)
 import Data.Time.LocalTime (LocalTime, ZonedTime, getZonedTime)
 import GHC.Stack (HasCallStack)
 import Prelude
 import Control.Exception.Base (SomeException, try)
+import Data.String
 
-class Loggable a where
-  fromLoggable :: a -> Text
+
 
 class Monad m => Log m where
-  logLn :: HasCallStack => Loggable a => a -> m ()
+  logI  :: HasCallStack => Text -> m ()
+  logW  :: HasCallStack => Text -> m ()
+  logE  :: HasCallStack => Text -> m ()
 
-data Logger m = Logger
-  { 
-    dologLn :: HasCallStack => Text -> m ()
-  }
+newtype Logger m = Logger {dologLn :: HasCallStack => Text -> m ()}
 
 
---logLnInit ::  LogOpts ;
 
-data Priority = INFO | NOTICE | WARNING | ERROR deriving (Show)
+
+data Priority = INFO | NOTICE | WARNING | ERROR deriving (Show, Eq, Ord)
 
 newtype SetOpts m = SetOpts {logOpt :: LogOpts -> Text -> m ()}
 
@@ -62,32 +54,41 @@ defaultLogOpts =
 
 
 
+
 instance
   ( Has (Logger m) r,
     Monad m
   ) =>
   Log (ReaderT r m)
   where
-   logLn a =
-      asks getter >>= \(Logger  doLog) -> lift . doLog . fromLoggable $ a
+   
+   logI  t =    
+      asks getter >>= \(Logger  doLog) -> lift . doLog $  (pack . show $ INFO) `append` " " `append`  t
+   logW  t =    
+      asks getter >>= \(Logger  doLog) -> lift . doLog $ (pack . show $ WARNING) `append` " " `append`  t
+   logE  t =    
+      asks getter >>= \(Logger  doLog) -> lift . doLog $ (pack . show $ ERROR) `append` " " `append`  t
 
-instance Loggable Text where
-  fromLoggable = id
 
---instance Loggable Priority where
---  fromLoggable = pack . show
 
-printLogX :: [Char] -> [Char] -> String ->Int-> IO ()
-printLogX _ _ _ 0 = return() 
-printLogX path fName str n    =  do
-   result <- try (appendFile (path ++ fName) str )  :: IO (Either SomeException ())
-   case result of
-    Right val -> return ()
-    Left ex -> do 
-     if n == 2 then do  
-       printLogX "" fName (show ex <> ": log will be written to the current directory") (n-1)
-       else do
-        putStrLn (show ex <> ": cannot write a log, the app will be stopped") 
-        printLogX "" "" "" (n-1)
-        
-printLog path fName str = printLogX path fName str 2        
+setFname name  str     
+      | "info" `isInfixOf` pack name  && ("ERROR" `isInfixOf` str) = "bot.error.log"
+      | otherwise = name
+      
+tD  =   getZonedTime >>= \t ->   
+                return  (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
+                 
+printLog  path fName str 
+  = do let fName' = setFname fName str  
+       t <- tD
+       let strOut = t ++ " " ++ unpack str ++ "\n"
+       result <- try (appendFile (path ++ fName') strOut) ::
+                   IO (Either SomeException ())
+       case result of
+         Right val -> return ()
+         Left ex
+           -> do putStrLn
+                   $ show ex
+                       <>
+                         ": cannot write a log, the app will be stopped , check the settings"
+      

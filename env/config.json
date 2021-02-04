@@ -1,7 +1,8 @@
 {
   "logOpts":{
-    "pathToLog": "/env/",
-    "nameLogInfo" : "bot.info.log"
+    "pathToLog": "env/",
+    "nameLogInfo" : "bot.info.log",
+    "displayMsg"  :  1
   },
   "subd": {
     "driver": "odbc",
