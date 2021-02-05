@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Log
   ( 
@@ -22,9 +23,12 @@ import Data.Time.Format (defaultTimeLocale, formatTime)
 import Data.Time.LocalTime (LocalTime, ZonedTime, getZonedTime)
 import GHC.Stack (HasCallStack)
 import Prelude
-import Control.Exception.Base (SomeException, try)
+import Control.Exception.Base (SomeException, try, handle, bracket)
 import Data.String
-
+import GHC.IO.FD (openFile)
+import GHC.IO.IOMode (IOMode(..))
+import GHC.IO.Handle (hClose, hFileSize)
+import Control.Monad as CM
 
 
 class Monad m => Log m where
@@ -69,20 +73,26 @@ instance
    logE  t =    
       asks getter >>= \(Logger  doLog) -> lift . doLog $ (pack . show $ ERROR) `append` " " `append`  t
 
+getFileSize :: FilePath -> IO (Maybe Integer)
+getFileSize path = handle handler
+                  $ bracket (openFile path ReadMode) (hClose ) (\h -> do size <- hFileSize h
+                                                                         return $ Just size)
+  where
+    handler :: SomeException -> IO (Maybe Integer)
+    handler _ = return Nothing
 
-
-setFname name  str     
+setLogName name  str     
       | "info" `isInfixOf` pack name  && ("ERROR" `isInfixOf` str) = "bot.error.log"
       | otherwise = name
       
-tD  =   getZonedTime >>= \t ->   
-                return  (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
-                 
-printLog  path fName str 
-  = do let fName' = setFname fName str  
-       t <- tD
-       let strOut = t ++ " " ++ unpack str ++ "\n"
-       result <- try (appendFile (path ++ fName') strOut) ::
+
+printLog :: LogOpts -> Text -> IO ()    -- Log                 
+printLog LogOpts{..} str
+  = do td <- getZonedTime >>= \t -> return  (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
+       let logName = setLogName   nameLogInfo  str 
+       let strOut = td ++ " " ++ unpack str ++ "\n" 
+       CM.when (displayMsg == 1) $ do putStrLn strOut
+       result <- try (appendFile (pathToLog ++ logName) strOut) ::
                    IO (Either SomeException ())
        case result of
          Right val -> return ()
@@ -91,4 +101,5 @@ printLog  path fName str
                    $ show ex
                        <>
                          ": cannot write a log, the app will be stopped , check the settings"
-      
+                         
+          

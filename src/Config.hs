@@ -14,8 +14,6 @@ module Config
     LogOpts(..),
     Subd(..),
     readConfig1,
-
-    --searchKeyFromJson
      ) where 
 
 import qualified Data.ByteString.Char8 as BS
@@ -60,17 +58,6 @@ warning = ", default values will be used!"
 
 
 
-readConfig :: IO (Either String BS.ByteString)
-
-readConfig = do
-  path <- getArgs
-  case path of
-    [] -> return $ Left ("Warning! no config set" ++ warning)
-    [_] -> do
-      content <- try (BS.readFile $ head path) :: IO (Either SomeException BS.ByteString)
-      case content of
-        Left e -> return $ Left (show e ++ warning)
-        Right content ->return $ Right content
 
 readConfig1 :: IO (Either String Config)
 
@@ -86,34 +73,6 @@ readConfig1 =  do
                                          Just config -> return $ Right config
                                          Nothing     -> return $ Left ("Invalid Json!! " ++ warning)
 
---readConfig1 :: IO (String ,Config)
-{--
-getConfig1 =  do
-                 path <- getArgs
-                 case path of
-                   [] -> putStrLn $ "Warning! no config set" ++ warning
-                   [_] -> do
-                     content <- try (BS.readFile $ head path) :: IO (Either SomeException BS.ByteString)
-                     case content of
-                       Left e -> putStrLn $  show e ++ warning
-                       Right content ->  case decodeStrict content:: Maybe Config of
-                                         Just con ->setconfig
-                                         Nothing  -> setconfig
-                                         where setconfig =
-
-                                                                                --}
-
-
-
-
-
-        {--
-        do
-           let result = decodeStrict content :: Maybe Object
-           case result of
-              Nothing   -> return ("Invalid JSON!", Nothing)
-              Just object -> return ("Config found",  Just object)
-           --}
 
 
 
