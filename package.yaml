@@ -31,6 +31,8 @@ dependencies:
 - text
 - http-conduit
 - data-has
+- filepath
+- transformers
 library:
   source-dirs: src
 

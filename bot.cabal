@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cf65d23b09321c08827c3921ed06433b12effd895622a93cc386d93252e86b43
+-- hash: 4a036a595dcc2e9fd47baa07c355387e1d1f3f288e152aa03faa176ade6423cf
 
 name:           bot
 version:        0.1.0.0
@@ -43,12 +43,14 @@ library
     , bytestring
     , containers
     , data-has
+    , filepath
     , http-conduit
     , lens
     , lens-aeson
     , mtl
     , text
     , time
+    , transformers
   default-language: Haskell2010
 
 executable bot-exe
@@ -65,12 +67,14 @@ executable bot-exe
     , bytestring
     , containers
     , data-has
+    , filepath
     , http-conduit
     , lens
     , lens-aeson
     , mtl
     , text
     , time
+    , transformers
   default-language: Haskell2010
 
 test-suite bot-test
@@ -88,10 +92,12 @@ test-suite bot-test
     , bytestring
     , containers
     , data-has
+    , filepath
     , http-conduit
     , lens
     , lens-aeson
     , mtl
     , text
     , time
+    , transformers
   default-language: Haskell2010

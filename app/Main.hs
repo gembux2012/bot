@@ -10,22 +10,20 @@
 
 module Main where
 
-import           Config                 (Config (..), LogOpts (..), Subd (..),
-                                         readConfig1)
-import           Control.Exception.Base (SomeException, catch, fromException,
-                                         try)
+import           Config                 (Config (..), readConfig1)
+import           Control.Exception.Base (SomeException, catch)
 import           Control.Monad.Reader   (runReaderT)
 import           Data.Has               (Has, getter, modifier)
-import           Data.Maybe
-import           Data.Text              (Text, append, pack, unpack)
-import           Data.Time.Format       (defaultTimeLocale, formatTime)
-import           Data.Time.LocalTime    (getZonedTime)
-import           Exception
-import           GHC.Exception          (prettyCallStack)
+import           Data.Maybe()
+--import           Data.Text()              
+--import           Data.Time.Format()      
+--import           Data.Time.LocalTime()    
+--import           Exception
+--import           GHC.Exception          (prettyCallStack)
 import           GHC.Generics           (Generic)
-import           GHC.Stack              (HasCallStack, callStack)
-import           Log                    (Log (..), Logger (..), Priority (..),
-                                          printLog, logI)
+--import           GHC.Stack              (HasCallStack, callStack)
+import           Log                    (Logger(..),Log(..),printLog)
+import System.FilePath.Posix (takeBaseName, takeExtension)
 
 {--
 app   =   Application
@@ -66,7 +64,7 @@ main = do
                   }
                 }
       runReaderT (logE "bot start") app
-      
+ -- putStrLn $ takeExtension  "bot"
       
 
 

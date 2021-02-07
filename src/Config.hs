@@ -38,8 +38,10 @@ import GHC.Generics (Generic)
 data LogOpts = LogOpts
         {
           pathToLog   :: String,
-          nameLogInfo :: String,
-          displayMsg  :: Int
+          nameLog :: String,
+          sizeLog :: Integer,
+          displayMsg  :: Int,
+          priority :: Int
         }  deriving (Generic, ToJSON, FromJSON, Show)
 
 data Subd =Subd

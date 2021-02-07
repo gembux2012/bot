@@ -1,12 +1,13 @@
 {
-  "logOpts":{
+  "logOpts": {
     "pathToLog": "env/",
-    "nameLogInfo" : "bot.info.log",
-    "displayMsg"  :  1
+    "nameLog": "bot",
+    "sizeLog" : 12,
+    "priority": 0,
+    "displayMsg": 1
   },
   "subd": {
     "driver": "odbc",
-    "password" : "Password00"
-
+    "password": "Password00"
   }
 }
