@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4a036a595dcc2e9fd47baa07c355387e1d1f3f288e152aa03faa176ade6423cf
+-- hash: 8b2fff942aec568650b243b80f3c82f9339ce56fa9c71ad8c8f0d48af27598b7
 
 name:           bot
 version:        0.1.0.0
@@ -43,6 +43,7 @@ library
     , bytestring
     , containers
     , data-has
+    , directory
     , filepath
     , http-conduit
     , lens
@@ -67,6 +68,7 @@ executable bot-exe
     , bytestring
     , containers
     , data-has
+    , directory
     , filepath
     , http-conduit
     , lens
@@ -92,6 +94,7 @@ test-suite bot-test
     , bytestring
     , containers
     , data-has
+    , directory
     , filepath
     , http-conduit
     , lens

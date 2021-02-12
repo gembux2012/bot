@@ -69,12 +69,13 @@ readConfig1 =  do
                    [] -> return $ Left    ("Warning! no config set" ++ warning)
                    [_] -> do
                      content <- try (BS.readFile $ head path) :: IO (Either SomeException BS.ByteString)
+                     
                      case content of
                        Left e -> return $ Left (show e ++ warning)
                        Right content ->  case decodeStrict content:: Maybe Config of
                                          Just config -> return $ Right config
                                          Nothing     -> return $ Left ("Invalid Json!! " ++ warning)
-
+                             
 
 
 

@@ -4,6 +4,8 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE BlockArguments #-}
 
 module Log
   ( 
@@ -23,11 +25,14 @@ import GHC.Stack (HasCallStack)
 import Prelude
 import Control.Exception.Base (SomeException, try, bracket, handle)
 import GHC.IO.IOMode (IOMode(..))
-import GHC.IO.Handle (hClose, hFileSize, Handle)
+import GHC.IO.Handle (hClose, hFileSize,  Handle)
 import Control.Monad as CM
 import System.IO (openFile)
 import System.FilePath.Posix(takeBaseName, takeExtension)
 import Control.Monad.Trans.Maybe
+import Data.Char (isDigit)
+import System.Directory (doesFileExist, getFileSize)
+
 
 class Monad m => Log m where
   logI  :: HasCallStack => Text -> m ()
@@ -72,45 +77,37 @@ instance
       asks getter >>= \(Logger  doLog) -> lift . doLog $ (pack . show $ ERROR) `append` " " `append`  t
 
 
-getFileSize :: FilePath -> IO (Maybe Integer)
-getFileSize path = handle handler
-                  $ bracket (openFile path ReadMode) hClose (\h -> do size <- hFileSize h
-                                                                      return $ Just size)
-  where
-    handler :: SomeException -> IO (Maybe Integer)
-    handler _ = return Nothing
+fileSize  path   = handle handler  (do getFileSize path  )
+ where
+     handler :: IOError -> IO Integer 
+     handler _ = return 0    
 
-getFileSize' :: FilePath -> (Handle -> MaybeT IO Integer) ->IO() 
-getFileSize' path =   bracket (openFile path ReadMode) hClose (\h -> do  lift  hFileSize h)
-  where
-   maybeSize h  = do lift $ hFileSize h
-    
-
-    
-setLogName :: String -> Int -> String -> Integer -> String
-setLogName name pr path sizelog    
-      | pr == 1 = takeBaseName name ++ ".error" ++ takeExtension name ++ rotationLog name
+setLogName :: String -> String -> Int -> Integer ->Integer -> String  
+setLogName name  path pr     
+      | pr == 1 = takeBaseName name ++ ".error" ++ takeExtension name 
       | otherwise = name
-      where 
-         rotationLog name 
-           | (getFileSize path)(Just size) >= sizelog ="1" 
-              
+                                                   
+rotationLog  name path   silogf sizelog              
+                   
               
 
 printLog :: LogOpts -> Text -> IO ()    -- Log                 
 printLog LogOpts{..} str
   = do td <- getZonedTime >>= \t -> return  (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
-       let logName = setLogName nameLog priority pathToLog sizeLog  
+       fExists <- doesFileExist $ pathToLog ++ nameLog
+       sizeLogF  <-  fileSize $ pathToLog ++ nameLog 
+       let logName = setLogName nameLog pathToLog priority sizeLogF sizeLog  
        let strOut = td ++ " " ++ unpack str ++ "\n" 
-       CM.when (displayMsg == 1) $ do putStrLn strOut
-       result <- try (appendFile (pathToLog ++ logName) strOut) ::
-                   IO (Either SomeException ())
-       case result of
-         Right  _ -> return ()
-         Left ex
-           -> do putStrLn
-                   $ show ex
-                       <>
-                         ": cannot write a log, the app will be stopped , check the settings"
-                         
+       CM.when (displayMsg == 1) $ do 
+                     putStrLn strOut
+                     result <- try (appendFile (pathToLog ++ nameLog) strOut) ::
+                                 IO (Either SomeException ())
+                     case result of
+                       Right  _ -> return ()
+                       Left ex
+                         -> do putStrLn
+                                 $ show ex
+                                     <>
+                                       ": cannot write a log, the app will be stopped , check the settings"
+                                     
           

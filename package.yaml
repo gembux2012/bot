@@ -33,6 +33,8 @@ dependencies:
 - data-has
 - filepath
 - transformers
+- directory
+
 library:
   source-dirs: src
 
