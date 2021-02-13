@@ -2,8 +2,9 @@
   "logOpts": {
     "pathToLog": "env/",
     "nameLog": "bot",
-    "sizeLog" : 12,
-    "priority": 0,
+    "sizeLog" : 5,
+    "maxNumFilesLog" : 4,
+    "priority": 1,
     "displayMsg": 1
   },
   "subd": {

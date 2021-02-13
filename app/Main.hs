@@ -63,7 +63,7 @@ main = do
                     dologLn  = printLog logOpts    --(pathToLog  logOpts)  (nameLogInfo logOpts)    
                   }
                 }
-      runReaderT (logE "bot start") app
+      runReaderT (logE "bot start ") app
  -- putStrLn $ takeExtension  "bot"
       
 
