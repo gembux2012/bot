@@ -9,65 +9,41 @@
 
 module Config
   ( Config (..),
-    LogOpts (..),
-    Subd (..),
-    readConfig1,
+    readConfig,
   )
 where
 
-import           Control.Exception.Base    (SomeException, catch, throw,
-                                            throwIO, try)
-import           Control.Lens.Combinators  (preview)
-import           Control.Monad             (mzero)
-import           Control.Monad.Reader
-import           Control.Monad.RWS.Class   (tell)
-import           Control.Monad.Writer.Lazy (Writer)
+import           Control.Exception.Base            (try)
 import           Data.Aeson
-import           Data.Aeson.Lens           (key, _String)
-import           Data.Aeson.Text
-import           Data.Aeson.Types          (parseMaybe)
-import qualified Data.ByteString.Char8     as BS
-import           Data.Has                  (Has, getter)
-import           Data.Maybe                (fromMaybe)
-import           GHC.Generics              (Generic)
-import           System.Environment
+import qualified Data.ByteString.Char8             as BS
+import           GHC.Generics                      (Generic)
+import           System.Directory.Internal.Prelude (getArgs)
 
-data LogOpts = LogOpts
-  { pathToLog      :: String,
-    nameLog        :: String,
-    sizeLog        :: Integer,
-    maxNumFilesLog :: Int,
-    displayMsg     :: Int,
-    priority       :: Int
+import           Logger.Adt                        (LogOpts, defaultLogOpts)
+
+
+newtype Config
+  = Config {logOpts :: LogOpts}
+  deriving (Generic,  FromJSON, Show)
+
+defaultConfig= Config
+  { logOpts = defaultLogOpts
+  
   }
-  deriving (Generic, ToJSON, FromJSON, Show)
-
-data Subd = Subd
-  { driver   :: String,
-    password :: String
-  }
-  deriving (Generic, ToJSON, FromJSON, Show)
-
-data Config = Config
-  { logOpts :: LogOpts,
-    subd    :: Subd
-  }
-  deriving (Generic, ToJSON, FromJSON, Show)
-
+warning :: [Char]
 warning = ", default values will be used!"
 
-readConfig1 :: IO (Either String Config)
-readConfig1 = do
+readConfig :: IO (String, Config)
+readConfig = do
   path <- getArgs
   case path of
-    [] -> return $ Left ("Warning! no config set" ++ warning)
+    [] -> return   ("Warning! no config set" ++ warning, defaultConfig)
     [_] -> do
-      content <- try (BS.readFile $ head path) :: IO (Either SomeException BS.ByteString)
-
+      content <- try (BS.readFile $ head path) :: IO (Either IOError BS.ByteString)
       case content of
-        Left e -> return $ Left (show e ++ warning)
-        Right content -> case decodeStrict content :: Maybe Config of
-          Just config -> return $ Right config
-          Nothing     -> return $ Left ("Invalid Json!! " ++ warning)
+        Left e -> return (show e ++ warning, defaultConfig)
+        Right content' -> case decodeStrict content' :: Maybe Config of
+          Just config -> return ("config read ", config)
+          Nothing     ->  return ("Invalid Json!! " ++ warning, defaultConfig)
 
 

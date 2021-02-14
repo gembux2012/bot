@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8b2fff942aec568650b243b80f3c82f9339ce56fa9c71ad8c8f0d48af27598b7
+-- hash: 6707a8967f1c20b337c4f2c805005faf6bf8646b75735d567efb6b7c72fb1395
 
 name:           bot
 version:        0.1.0.0
@@ -30,8 +30,10 @@ library
       Config
       Exception
       Lib
-      Log
-      Logger
+      Logger.Adt
+      Logger.App
+      Logger.Class
+      Network.Api
       Utility
   other-modules:
       Paths_bot
@@ -45,6 +47,7 @@ library
     , data-has
     , directory
     , filepath
+    , http-client
     , http-conduit
     , lens
     , lens-aeson
@@ -70,6 +73,7 @@ executable bot-exe
     , data-has
     , directory
     , filepath
+    , http-client
     , http-conduit
     , lens
     , lens-aeson
@@ -96,6 +100,7 @@ test-suite bot-test
     , data-has
     , directory
     , filepath
+    , http-client
     , http-conduit
     , lens
     , lens-aeson
