@@ -19,6 +19,7 @@ import           Logger.App             (printLog)
 
 import           Logger.Adt             (Logger(..), )
 import           Logger.Class           (Log (..))
+import Data.Text.Internal.Lazy (Text)
 
 main :: IO ()
 main = do
@@ -31,7 +32,11 @@ main = do
                 dologLn  = printLog logOpts    
               }
             }
-  runReaderT (logE "bot start ") app
+  runReaderT api  app
+api :: Log m =>
+   m ()
+api = do  
+ logE "bot start"
 
 newtype Application m
   = Application {logger :: Logger m}
@@ -40,3 +45,4 @@ newtype Application m
 instance Has (Logger m) (Application m) where
   getter = logger
   modifier f a = a {logger = f . logger $ a}
+
