@@ -7,8 +7,10 @@
     "priority": 1,
     "displayMsg": 1
   },
-  "subd": {
-    "driver": "odbc",
-    "password": "Password00"
+  "response":
+  {"key":"e2d4c232a80a977a0211d2f0093767032bbd5635",
+    "server":"https:\/\/lp.vk.com\/wh202652768",
+    "ts":10
   }
 }
+

@@ -20,6 +20,7 @@ import           Logger.App             (printLog)
 import           Logger.Adt             (Logger(..), )
 import           Logger.Class           (Log (..))
 import Data.Text.Internal.Lazy (Text)
+import Network.Api (run)
 
 main :: IO ()
 main = do
@@ -33,10 +34,13 @@ main = do
               }
             }
   runReaderT api  app
+  _ <- run
+  return()
 api :: Log m =>
    m ()
 api = do  
- logE "bot start"
+ logE "bot start" 
+ 
 
 newtype Application m
   = Application {logger :: Logger m}
