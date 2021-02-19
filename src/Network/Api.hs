@@ -23,8 +23,11 @@ import qualified Data.Text.IO                  as TIO
 import qualified Data.ByteString.Char8 as BS
 -- import Data.Aeson.Encode (encode)
 import Network.HTTP.Conduit (http)
-import Data.Text.Encoding (encodeUtf8)
+import Data.Text.Encoding (encodeUtf8, decodeUtf8)
 import Control.Lens.Combinators (preview)
+
+import           Logger.Class           (Log (..))
+import Data.ByteString.Char8 (pack)
 
 --https://api.vk.com/method/groups.getLongPollServer?access_token=&group_id=202652768&v=5.130
 -- send https://api.vk.com/method/messages.send?user_id=454751226&message=&title=gh&access_token=v=5.50
@@ -61,7 +64,8 @@ getErr = preview (L.key "error" . L.key "error_msg" .  L._String)
 
 
 
-run
+
+request
   =  do
    request <- parseRequest $ "GET" ++ " " ++ auth
    putStrLn auth 
