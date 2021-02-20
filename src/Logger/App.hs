@@ -15,6 +15,8 @@ import Data.Time as DT
 import System.Directory (getFileSize, renamePath)
 import System.FilePath.Posix (takeBaseName, takeExtension)
 
+
+
 fileSize :: FilePath -> IO Integer
 fileSize path = handle handler (do getFileSize path)
   where

@@ -34,12 +34,15 @@ main = do
               }
             }
   runReaderT api  app
-  _ <- run
+  _ <- run 
+  
   return()
 api :: Log m =>
    m ()
 api = do  
  logE "bot start" 
+ 
+ 
  
 
 newtype Application m
