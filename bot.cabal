@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6707a8967f1c20b337c4f2c805005faf6bf8646b75735d567efb6b7c72fb1395
+-- hash: 513c7ae93528ae2b8ddfa82b3fbc2f6e0463276da07f3f41af71476f7e82733e
 
 name:           bot
 version:        0.1.0.0
@@ -34,6 +34,7 @@ library
       Logger.App
       Logger.Class
       Network.Api
+      Network.Class
       Utility
   other-modules:
       Paths_bot
@@ -46,15 +47,17 @@ library
     , containers
     , data-has
     , directory
+    , exceptions
     , filepath
-    , http-client
     , http-conduit
     , lens
     , lens-aeson
+    , lifted-base
     , mtl
     , text
     , time
     , transformers
+    , transformers-base
   default-language: Haskell2010
 
 executable bot-exe
@@ -72,15 +75,17 @@ executable bot-exe
     , containers
     , data-has
     , directory
+    , exceptions
     , filepath
-    , http-client
     , http-conduit
     , lens
     , lens-aeson
+    , lifted-base
     , mtl
     , text
     , time
     , transformers
+    , transformers-base
   default-language: Haskell2010
 
 test-suite bot-test
@@ -99,13 +104,15 @@ test-suite bot-test
     , containers
     , data-has
     , directory
+    , exceptions
     , filepath
-    , http-client
     , http-conduit
     , lens
     , lens-aeson
+    , lifted-base
     , mtl
     , text
     , time
     , transformers
+    , transformers-base
   default-language: Haskell2010

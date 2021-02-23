@@ -109,5 +109,7 @@
     <orderEntry type="library" name="void-0.7.3" level="project" />
     <orderEntry type="library" name="asn1-parse-0.9.5" level="project" />
     <orderEntry type="library" name="pem-0.2.4" level="project" />
+    <orderEntry type="library" name="lifted-base-0.2.3.12" level="project" />
+    <orderEntry type="library" name="monad-control-1.0.2.3" level="project" />
   </component>
 </module>

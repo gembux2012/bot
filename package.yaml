@@ -34,6 +34,9 @@ dependencies:
 - filepath
 - transformers
 - directory
+- exceptions
+- lifted-base
+- transformers-base
 
 library:
   source-dirs: src

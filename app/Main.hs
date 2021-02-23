@@ -12,15 +12,17 @@ module Main where
 
 import           Config                 (Config (..), readConfig)
 import           Control.Exception.Base ()
-import           Control.Monad.Reader   (runReaderT)
+import           Control.Monad.Reader   (runReaderT, MonadIO)
 import           Data.Has               (Has, getter, modifier)
 import           GHC.Generics           (Generic)
 import           Logger.App             (printLog)
 
 import           Logger.Adt             (Logger(..), )
 import           Logger.Class           (Log (..))
-import Data.Text.Internal.Lazy (Text)
+import Data.Text (Text, pack)
+--import Data.ByteString.Char8 (pack)
 import Network.Api (run)
+import Control.Monad.Catch.Pure (MonadThrow)
 
 main :: IO ()
 main = do
@@ -34,14 +36,20 @@ main = do
               }
             }
   runReaderT api  app
-  _ <- run 
   
-  return()
-api :: Log m =>
+  return () 
+  
+  
+api :: 
+  MonadThrow m 
+  => MonadIO m
+  => Log m =>
    m ()
 api = do  
- logE "bot start" 
- 
+ logE "bot start"
+ _ <- run
+ return()
+
  
  
 
