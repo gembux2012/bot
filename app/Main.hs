@@ -23,6 +23,7 @@ import Data.Text (Text, pack)
 --import Data.ByteString.Char8 (pack)
 import Network.Api (run)
 import Control.Monad.Catch.Pure (MonadThrow)
+import Control.Monad.Base (MonadBase)
 
 main :: IO ()
 main = do
@@ -41,8 +42,10 @@ main = do
   
   
 api :: 
-  MonadThrow m 
-  => MonadIO m
+   MonadThrow m
+    => MonadIO m
+    =>MonadBase IO m
+    => Log m 
   => Log m =>
    m ()
 api = do  

@@ -7,6 +7,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 
 
@@ -29,7 +30,7 @@ import Network.HTTP.Conduit (http)
 import Network.HTTP.Simple
 import Data.Text.Encoding (encodeUtf8, decodeUtf8)
 import Control.Lens.Combinators (preview)
-import Control.Lens ((^?))
+import Control.Lens ((^?), (^.))
 
 import           Logger.Class           (Log (..))
 import Data.ByteString.Char8 (pack)
@@ -38,8 +39,9 @@ import Data.Aeson.Lens (values)
 --import Control.Exception.Base (try)
 import Control.Monad.Catch
 import Control.Monad.IO.Class
-import Control.Concurrent.Lifted
+import qualified   Control.Concurrent.Lifted as CCL
 import Control.Monad.Base
+import qualified Control.Monad as CM
 
 --https://api.vk.com/method/groups.getLongPollServer?access_token=&group_id=202652768&v=5.130
 -- send https://api.vk.com/method/messages.send?user_id=454751226&message=&title=gh&access_token=v=5.50
@@ -92,22 +94,52 @@ requestMessage Response{..} = do
 requestVK :: 
      MonadThrow m
   => MonadIO m
-  -- =>MonadBase IO m
+  =>MonadBase IO m
   => Log m 
-  => String -> m BS8.ByteString
-requestVK url = do
+  => String -> String -> m BS8.ByteString
+requestVK  url method = do
  rq <- parseRequest $ "GET" ++ " " ++ url
  response <-  httpBS  rq
  let status = getResponseStatusCode response
  case status of 
   200 -> do 
-         logI $ T.pack(show status) 
-         return $ getResponseBody response
+   case method of
+    "outh" -> do 
+       case getResponseBody response ^? key "error". key "error_msg"  ._String of
+         Just err -> do 
+          logE $ T.pack(show rq) <> " return " <> T.pack(show err ) <> " app will be stopped"
+          return "/stop"  
+         Nothing -> do
+          case  extractMessage (getResponseBody response) "outh" of
+           Just urlM ->  do  
+            logI $ T.pack(show rq) <> " status " <> T.pack(show status)
+            requestVK  urlM "getMessage"
+           Nothing -> return "/stop"      
+    "getMessge" -> do
+       case getResponseBody response ^? key "failed" ._String of
+              1 -> do 
+               logE $ T.pack(show rq) <> " return " <> T.pack(show err ) <> " app will be stopped"
+               return "/stop"  
+              Nothing -> do
+               case  extractMessage (getResponseBody response) "outh" of
+                Just urlM ->  do  
+                 logI $ T.pack(show rq) <> " status " <> T.pack(show status)
+                 requestVK  urlM "getMessage"
+                Nothing -> return "/stop" 
   _ -> do           
-       --logE $ T.pack(show status)
-       threadDelay 100000
-       requestVK url   
+   logW $ T.pack(show rq) <> " status " <> T.pack (show status)
+   CCL.threadDelay $ 10^7
+   requestVK  url method   
        
+extractMessage body method = do
+ case method of 
+  "outh " -> do
+    keyAuth <- body ^? key "response". key "key"  . _String 
+    server <- body ^?  key "response" . key "server" . _String
+    ts <- body ^? key "response" . key "ts" . _String
+    let url = uri ++ "/" ++ T.unpack server ++ "?act=a_check&key=" ++ T.unpack keyAuth ++ 
+              "&ts=" ++ T.unpack ts ++ "&wait=25"
+    return  url
 
  
 
@@ -130,8 +162,9 @@ requestVK url = do
 --}
 
 run :: 
- MonadThrow m 
+  MonadThrow m
    => MonadIO m
+   =>MonadBase IO m
    => Log m 
  => m ()
 run 
