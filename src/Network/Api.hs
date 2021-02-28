@@ -6,6 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Strict #-}
+{-# LANGUAGE TupleSections #-}
 
 module Network.Api
   ( run,
@@ -20,15 +21,15 @@ where
 --import Control.Exception.Base (try)
 
 import qualified Control.Concurrent.Lifted as CCL
-import           Control.Lens ((^.), (^?))
+import           Control.Lens.Fold ((^?))
 import           Control.Lens.Combinators (preview)
 import qualified Control.Monad as CM
 import           Control.Monad.Base
 import           Control.Monad.Catch
 import           Control.Monad.IO.Class
 import           Data.Aeson
-import qualified Data.Aeson.Lens as L
-import           Data.Aeson.Lens (_String, key)
+--import qualified Data.Aeson.Lens as L
+import Data.Aeson.Lens ( _String, key, AsValue, AsPrimitive, values , _Integer)
 import           Data.Aeson.Lens (values)
 import qualified Data.ByteString.Char8 as BS8
 import           Data.ByteString.Char8 (pack)
@@ -51,92 +52,88 @@ keyGroup = "13b47b20e6324c0dcc288baec4a318ee359bd16dc2f57c7bf215755241faf955de12
 
 keyUser = "454751226"
 
-versionService = 5.150
+versionService = "5.50"
 
-uriVK = "https://api.vk.com/"
+uriVK = "api.vk.com"
 
 -- {"response":{"key":"e2d4c232a80a977a0211d2f0093767032bbd5635","server":"https:\/\/lp.vk.com\/wh202652768","ts":10}}
 data RequestVK = RequestVK
-  { requestHost :: BS8.String,
-    requestPath :: BS8.String,
-    requestMethod ::BS8.String,
+  { requestHost :: BS8.ByteString,
+    requestPath :: BS8.ByteString,
+    requestMethod :: BS8.ByteString,
     requestQuery :: Query
   }
 
+authRequestVk :: RequestVK
 authRequestVk = RequestVK
- { requestHost = uriVK,
+ { requestHost = BS8.pack uriVK,
    requestPath = "/method/",
-   requestMethod = "groups.getLongPollServer?",
-   requestQuery = [("access_token", Just keyGroup),("group_id", Just idGroup),("v", Just versionService) ]
+   requestMethod = "groups.getLongPollServer",
+   requestQuery = [("access_token", Just keyGroup), ("group_id", Just idGroup),("v", Just versionService)]
   }
+ 
 
-getMessageRequestVK = RequestVK
- { requestHost = uriVK,
-    requestPath = "",
-    requestMethod = "",
-    requestQuery = [("access_token", Just keyGroup),("group_id", Just idGroup),("v", Just versionService) ]
-   }
+
 
 requestVK ::
   MonadThrow m =>
   MonadIO m =>
-  MonadBase IO m =>
+ -- MonadBase IO m =>
   Log m =>
   RequestVK ->
   m BS8.ByteString
-requestVK req = do
+
+requestVK RequestVK{..} = do
   let request 
-        = setRequestHost uriVK
-        $ setRequestPath requestPath <> requestMethod
-        $ setRequestQueryString requestQuery
-        -- $ defaultRequest
-   --rq <- parseRequest request
+        = setRequestMethod "GET"
+        $ setRequestHost requestHost
+        $ setRequestPort 443
+        $ setRequestSecure True
+        $ setRequestPath (requestPath <>  requestMethod)
+        $ setRequestQueryString  requestQuery
+        defaultRequest
+  
   response <- httpBS request
   let status = getResponseStatusCode response
   case status of
     200 -> do
-      case method of
-        "outh" -> do
-          case getResponseBody response ^? key "error" . key "error_msg" . _String of
+      case requestMethod of
+        "groups.getLongPollServer" -> do
+          let body = getResponseBody response 
+          case body ^? key "error" . key "error_msg" . _String of
             Just err -> do
-              logE $ T.pack (show rq) <> " return " <> T.pack (show err) <> " app will be stopped"
+              logE $ "method " <> T.pack (show requestMethod) <> " return " <> T.pack (show err) <> " app will be stopped"
               return "/stop"
             Nothing -> do
-              case extractMessage (getResponseBody response) "outh" of
-                Just urlM -> do
-                  logI $ T.pack (show rq) <> " status " <> T.pack (show status)
-                  requestVK urlM "getMessage"
-                Nothing -> return "/stop"
-        "getMessge" -> do
-          --case getResponseBody response ^? key "failed" . _String of
-            err <- getResponseBody response ^? key "failed" . _String
-            ts <- err ^? key "failed" . key "ts" _String
-            case err of
-             1 -> do
+                  logI $ "method " <> T.pack (show requestMethod) <> " status " <> T.pack (show status)
+                  case extractMessage body of
+                   Nothing -> return "/stop unknown"
+                   Just( secKey, ts) ->
+                    requestVK RequestVK   
+                           { requestHost = "lp.vk.com",
+                              requestPath = "/wh" <> idGroup,
+                              requestMethod = "", 
+                              requestQuery = [("act", Just "a_check"),("key",  Just secKey ), ("ts", Just ts),("wait", Just "25")]
+                             }        
+        "" -> do 
+           logI $  "method  chek" 
+           return "mesage "                    
+                
 
-            Nothing -> do
-              case extractMessage (getResponseBody response) "outh" of
-                Just urlM -> do
-                  logI $ T.pack (show rq) <> " status " <> T.pack (show status)
-                  requestVK urlM "getMessage"
-                Nothing -> return "/stop"
+        
     _ -> do
-      logW $ T.pack (show rq) <> " status " <> T.pack (show status)
-      CCL.threadDelay $ 10 ^ 7
-      requestVK url method
+      logE $ "method " <> T.pack (show request) <> " status " <> T.pack (show status) <> " app will be stopped"
+      return "/stop "
 
-extractMessage body method = do
-  case method of
-    "outh " -> do
-      keyAuth <- body ^? key "response" . key "key" . _String
-      server <- body ^? key "response" . key "server" . _String
-      ts <- body ^? key "response" . key "ts" . _String
-      let url =
-            uri ++ "/" ++ T.unpack server ++ "?act=a_check&key=" ++ T.unpack keyAuth
-              ++ "&ts="
-              ++ T.unpack ts
-              ++ "&wait=25"
-      return url
+
+
+
+
+
+extractMessage :: AsValue s => s -> Maybe (BS8.ByteString, BS8.ByteString)
+extractMessage body  = 
+       body ^? key "response" . key "key" . _String >>= \secKey ->
+       body ^? key "response" . key "ts" . _Integer >>= \ts -> Just (encodeUtf8 secKey  ,BS8.pack $ show ts)
 
 
 
@@ -145,11 +142,12 @@ run ::
   MonadIO m =>
   MonadBase IO m =>
   Log m =>
-  RequestVK ->  m ()
-run authRequestVk =
-  do
-    body <- requestVK url
-    logI $ T.pack (BS8.unpack body)
+   m ()
+run  = do 
+                  mes <- requestVK  authRequestVk
+                  logI $  T.pack (BS8.unpack mes)
+                  
+                  
 
 --BS8.putStrLn body
 --putStrLn auth

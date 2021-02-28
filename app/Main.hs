@@ -24,6 +24,7 @@ import Data.Text (Text, pack)
 import Network.Api (run)
 import Control.Monad.Catch.Pure (MonadThrow)
 import Control.Monad.Base (MonadBase)
+import Control.Concurrent
 
 main :: IO ()
 main = do
@@ -46,10 +47,9 @@ api ::
     => MonadIO m
     =>MonadBase IO m
     => Log m 
-  => Log m =>
-   m ()
+   => m ()
 api = do  
- logE "bot start"
+ logI "bot start"
  _ <- run
  return()
 

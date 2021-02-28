@@ -1,3 +1,5 @@
-02-23-2021 16:02:17 +07 ERROR bot start
-02-23-2021 16:02:18 +07 INFO 200
-02-23-2021 16:02:18 +07 INFO {"error":{"error_code":8,"error_msg":"Invalid request: versions below 5.21 are deprecated. Version param should be passed as \"v\". \"version\" param is invalid and not supported. For more information go to https:\/\/vk.com\/dev\/constant_version_updates","request_params":[{"key":"group_id","value":"202652768"},{"key":"v","value":"5.15"},{"key":"method","value":"groups.getLongPollServer"},{"key":"oauth","value":"1"}]}}
+02-28-2021 10:24:05 +07 INFO mesage 
+02-28-2021 11:03:21 +07 ERROR bot start
+02-28-2021 11:03:22 +07 INFO method "groups.getLongPollServer" status 200
+02-28-2021 11:04:49 +07 ERROR bot start
+02-28-2021 11:04:50 +07 INFO method "groups.getLongPollServer" status 200

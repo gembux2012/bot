@@ -1,0 +1,15 @@
+02-28-2021 10:24:05 +07 INFO Request {
+  host                 = "lp.vk.com"
+  port                 = 443
+  secure               = True
+  requestHeaders       = []
+  path                 = "/wh202652768"
+  queryString          = "?act=a_check&key=89283dd8882324d239e9dfdc2530879d5ddc8b69&ts=12&wait=25"
+  method               = "GET"
+  proxy                = Nothing
+  rawBody              = False
+  redirectCount        = 10
+  responseTimeout      = ResponseTimeoutDefault
+  requestVersion       = HTTP/1.1
+}
+
