@@ -29,17 +29,26 @@ import Control.Concurrent
 main :: IO ()
 main = do
   conf <- readConfig
+  m <- newEmptyMVar
   putStrLn  $ fst conf
-  let Config{..} = snd conf   
+  let Config{..} = snd conf
+  forkIO (dologLn logOpts)  
+   
   let app = Application
             { logger = Logger
               {
-                dologLn  = printLog logOpts    
+                dologLn  = \msg-> putMVar(m msg)
+                              
               }
             }
   runReaderT api  app
   
   return () 
+  where
+     loop m = do
+       cmd <- takeMVar m
+       printLog cmd
+       loop     --printLog logOpts
   
   
 api :: 
