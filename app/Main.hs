@@ -31,24 +31,28 @@ main = do
   conf <- readConfig
   m <- newEmptyMVar
   putStrLn  $ fst conf
-  let Config{..} = snd conf
-  forkIO (dologLn logOpts)  
+  let config = snd conf
+  forkIO $ logger' config m    
+    
+       
    
   let app = Application
             { logger = Logger
               {
-                dologLn  = \msg-> putMVar(m msg)
+                dologLn  = \msg-> putMVar m msg
                               
               }
             }
   runReaderT api  app
   
   return () 
-  where
-     loop m = do
-       cmd <- takeMVar m
-       printLog cmd
-       loop     --printLog logOpts
+  
+logger' conf m = loop 
+ where  
+       loop   = do
+           cmd <- takeMVar m 
+           printLog  (logOpts conf)  cmd
+           loop     --printLog logOpts 
   
   
 api :: 

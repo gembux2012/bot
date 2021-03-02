@@ -1,5 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE BlockArguments #-}
+--{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -38,9 +38,8 @@ import           Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import qualified Data.Text.IO as TIO
 import           GHC.Generics
 import           Logger.Class (Log (..))
-import           Network.HTTP.Conduit (http)
-import           Network.HTTP.Simple (HttpException, JSONException, getResponseBody, getResponseHeader, getResponseStatusCode, httpBS, httpJSON, httpJSONEither, parseRequest)
-import           Network.HTTP.Simple
+import           Network.HTTP.Conduit (http )
+import           Network.HTTP.Simple 
 
 --https://api.vk.com/method/groups.getLongPollServer?access_token=&group_id=202652768&v=5.130
 -- send https://api.vk.com/method/messages.send?user_id=454751226&message=&title=gh&access_token=v=5.50
@@ -91,9 +90,11 @@ requestVK RequestVK{..} = do
         $ setRequestSecure True
         $ setRequestPath (requestPath <>  requestMethod)
         $ setRequestQueryString  requestQuery
+        -- setRequestR
         defaultRequest
   
   response <- httpBS request
+ --logI $ "request " <> T.pack (show request) <>  T.pack (show response) <> T.pack (show requestPath)
   let status = getResponseStatusCode response
   case status of
     200 -> do
@@ -116,7 +117,7 @@ requestVK RequestVK{..} = do
                               requestQuery = [("act", Just "a_check"),("key",  Just secKey ), ("ts", Just ts),("wait", Just "25")]
                              }        
         "" -> do 
-           logI $  "method  chek" 
+           logI  "method  chek" 
            return "mesage "                    
                 
 
