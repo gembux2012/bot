@@ -1,2 +1,3 @@
-03-02-2021 17:29:42 +07 INFO bot start
-03-02-2021 17:29:42 +07 INFO method "groups.getLongPollServer" status 200
+03-09-2021 17:23:07 +07 INFO https://lp.vk.com/wh202652768?act=a_check&key=4ae71b1e2653b6c43cde54417f305c3a2c39c626&ts=13&wait=25
+03-09-2021 17:23:07 +07 INFO {"ts":"14","updates":[{"type":"wall_post_new","object":{"id":5,"from_id":454751226,"owner_id":-202652768,"date":1615285316,"marked_as_ads":0,"post_type":"post","text":"ÐÑÐ¸Ð²ÐµÑ","can_edit":1,"created_by":454751226,"can_delete":1,"comments":{"count":0}},"group_id":202652768,"event_id":"eb4415fb45b10e0e2534eb41503791cb875f68b7"}]}
+

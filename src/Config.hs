@@ -31,7 +31,7 @@ defaultConfig= Config
   
   }
 warning :: [Char]
-warning = ", default values will be used!"
+warning = ", default values will be used!!."
 
 readConfig :: IO (String, Config)
 readConfig = do

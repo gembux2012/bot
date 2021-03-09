@@ -26,35 +26,43 @@ import Control.Monad.Catch.Pure (MonadThrow)
 import Control.Monad.Base (MonadBase)
 import Control.Concurrent
 
+data LogCommand = Message Text | Stop (MVar ())
+
+
 main :: IO ()
 main = do
   conf <- readConfig
   m <- newEmptyMVar
-  putStrLn  $ fst conf
   let config = snd conf
-  forkIO $ logger' config m    
-    
-       
-   
+  putStrLn  $ fst conf
   let app = Application
             { logger = Logger
               {
-                dologLn  = \msg-> putMVar m msg
+                dologLn  = putMVar m . Message
                               
               }
             }
+  forkIO $ logger' config m
   runReaderT api  app
-  
-  return () 
-  
-logger' conf m = loop 
+ 
+  s <- newEmptyMVar
+  putMVar m (Stop s)
+  takeMVar s             
+
+ 
+   
+logger' :: Config -> MVar LogCommand -> IO ()
+logger' conf m  = loop 
  where  
-       loop   = do
-           cmd <- takeMVar m 
-           printLog  (logOpts conf)  cmd
-           loop     --printLog logOpts 
-  
-  
+   loop   = do
+    cmd <- takeMVar m
+    case cmd of
+     Message msg -> do
+       printLog  (logOpts conf)  msg 
+       loop      
+     Stop s -> do
+          putMVar s ()
+
 api :: 
    MonadThrow m
     => MonadIO m
@@ -64,7 +72,7 @@ api ::
 api = do  
  logI "bot start"
  _ <- run
- return()
+ return ()
 
  
  
