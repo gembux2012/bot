@@ -37,6 +37,7 @@ dependencies:
 - exceptions
 - lifted-base
 - transformers-base
+- medea
 
 library:
   source-dirs: src
