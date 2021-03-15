@@ -1,5 +1,6 @@
-module Logger.Tmp where
 
+module Logger.Tmp where
+{---
 data Logger = Logger (MVar LogCommand)
 
 data LogCommand = Message String | Stop (MVar ())
@@ -39,3 +40,4 @@ main = do
   logMessage l "hello"
   logMessage l "bye"
   logStop l  
+  --}

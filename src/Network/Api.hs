@@ -31,7 +31,7 @@ import qualified Control.Monad as CM
 import Control.Monad.Base
 import Control.Monad.Catch
 import Control.Monad.IO.Class
-import Data.Aeson
+--import Data.Aeson
 import Data.Aeson.Lens (AsPrimitive, AsValue, _Array, _Integer, _JSON, _Object, _String, key, values, values)
 import Data.Aeson.Lens (values)
 import qualified Data.ByteString.Char8 as BS8
@@ -44,7 +44,10 @@ import GHC.Generics
 import Logger.Class (Log (..))
 import Network.HTTP.Conduit (http)
 import Network.HTTP.Simple
-import Data.Aeson.Types (Parser, parseMaybe, FromJSON)
+import Data.Aeson.Types (Parser, parseMaybe, FromJSON, Value, withObject, (.:), fieldLabelModifier, genericParseJSON, defaultOptions)
+import Data.Aeson (decodeStrict,parseJSON)
+
+
 
 --import Control.Monad.Base (fromList)
 
@@ -65,13 +68,17 @@ uriVK = "api.vk.com"
 data ResponseMessage = Message BS8.ByteString | Stop
 
 data DataMessage = DataMessage
-  { --type' :: String,
-    --group_id :: Integer,
-    --event_id :: String,
+  { _type :: String,
+    group_id :: Integer,
+    event_id :: String,
     object :: DataMessageObject
   } 
-  deriving (Generic, FromJSON, Show)
-       
+  deriving (Generic,  Show)
+
+instance FromJSON DataMessage where
+  parseJSON = genericParseJSON defaultOptions {
+                fieldLabelModifier = drop 1 }
+                
 data DataMessageObject = DataMessageObject
  { id :: Int,
    from_id :: Integer,
@@ -178,8 +185,11 @@ getMessageVK secKey ts = do
             Just ts'' -> do
               logI $ T.pack ts
               case parseMaybe msg =<< decodeStrict body' of
-                Just [msg']-> do
-                  logI $ T.pack (text (DataMessageObject DataMessage))   
+                Just [] -> do
+                       logI " not message"
+                       getMessageVK secKey (show ts'')
+                Just [ msg' ] ->  do
+                  logI $ T.pack ( text (object msg'))
                   -- case msg ^? key "object". key "text" . _String of
                   -- Just msg -> do
                   --logI $ T.pack (show msg)

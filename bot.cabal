@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 513c7ae93528ae2b8ddfa82b3fbc2f6e0463276da07f3f41af71476f7e82733e
+-- hash: 1c9302839793ac95ab18e4c8db8d6e9c469c9c434a62821222471f954e655cd3
 
 name:           bot
 version:        0.1.0.0
@@ -28,14 +28,12 @@ source-repository head
 library
   exposed-modules:
       Config
-      Exception
-      Lib
       Logger.Adt
       Logger.App
       Logger.Class
+      Logger.Tmp
       Network.Api
       Network.Class
-      Utility
   other-modules:
       Paths_bot
   hs-source-dirs:
