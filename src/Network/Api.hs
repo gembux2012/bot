@@ -8,6 +8,10 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE Strict #-}
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE Strict #-}
+{-# LANGUAGE Strict #-}
+{-# LANGUAGE Strict #-}
 
 module Network.Api
   ( run,
@@ -65,39 +69,6 @@ versionService = "5.50" :: String
 
 uriVK = "api.vk.com"
 
-data ResponseMessage = Message BS8.ByteString | Stop
-
-data DataMessage = DataMessage
-  { _type :: String,
-    group_id :: Integer,
-    event_id :: String,
-    object :: DataMessageObject
-  } 
-  deriving (Generic,  Show)
-
-instance FromJSON DataMessage where
-  parseJSON = genericParseJSON defaultOptions {
-                fieldLabelModifier = drop 1 }
-                
-data DataMessageObject = DataMessageObject
- { id :: Int,
-   from_id :: Integer,
-   owner_id :: Integer,
-   date :: Integer,
-   marked_as_ads :: Integer,
-   post_type :: String,
-   text :: String,
-   can_edit :: Int,
-   created_by :: Integer,
-   can_delete :: Int,
-   comments :: DataMessageComment
- }
-  deriving (Generic, FromJSON, Show)
- 
-data DataMessageComment = DataMessageComment
-  { count :: Int
-  } 
-  deriving (Generic, FromJSON, Show)
  
 run ::
   MonadThrow m =>
@@ -121,13 +92,13 @@ requestVK' ::
 requestVK' url = do
   request <- parseRequest url
   response <- httpBS request
-  logI $ T.pack url
+  --logI $ T.pack url
   let status = getResponseStatusCode response
   case status of
-    200 -> return $ Message (getResponseBody response)
-    _ -> do
-      logE $ "method " <> T.pack (show request) <> " status " <> T.pack (show status) <> " app will be stopped"
-      return Stop
+    200 -> pure $ Message (getResponseBody response)
+    _ -> do 
+     logE $ "method " <> T.pack (show request) <> " status " <> T.pack (show status) <> " app will be stopped"
+     pure Stop 
 
 authVK ::
   MonadThrow m =>
@@ -141,12 +112,12 @@ authVK = do
     Message body' ->
       case body' ^? key "error" . key "error_msg" . _String of
         Just err -> do
-          logE $ "authorisation Error " <> err <> " app will be stopped"
-          return Stop
+         logE $ "authorisation Error " <> err <> " app will be stopped"
+         pure Stop
         Nothing -> do
           logI "authorization successful, awaiting message"
           case extractSecKey body' of
-            Nothing -> return Stop
+            Nothing  ->  Stop <$ logE " unknown error, bot stop"
             Just (secKey, ts) -> getMessageVK secKey (show ts)
   where
     url =
@@ -174,43 +145,52 @@ getMessageVK secKey ts = do
           case failed of
             1 -> do
               case body' ^? key "ts" . _Integer of
-                Nothing -> return Stop
+                Nothing ->  Stop <$ logE " unknown error, bot stop"
                 Just ts' -> getMessageVK secKey (show ts')
             _ -> authVK
-        Nothing -> do
-          logI "awaiting message"
-          --logI $ T.pack (BS8.unpack body')
-          case body' ^? key "ts" . _String of
-            Nothing -> return Stop
-            Just ts'' -> do
-              logI $ T.pack ts
-              case parseMaybe msg =<< decodeStrict body' of
-                Just [] -> do
-                       logI " not message"
-                       getMessageVK secKey (show ts'')
-                Just [ msg' ] ->  do
-                  logI $ T.pack ( text (object msg'))
-                  -- case msg ^? key "object". key "text" . _String of
-                  -- Just msg -> do
-                  --logI $ T.pack (show msg)
-                  getMessageVK secKey (show ts'')
-                --Nothing -> getMessageVK secKey (show ts'')
-                Nothing -> getMessageVK secKey (show ts'')
+        Nothing -> do 
+          
+          case  decodeStrict body' :: Maybe DataMessage of
+            Just DataMessage{..}  -> 
+             case updates of
+              [] -> do  
+                logI "not message"    
+                logI "awaiting message"
+                getMessageVK secKey (show ts)
+              [msg] -> do
+               logI $ "message received: " <>  T.pack(text (_object msg))
+               sendMessage secKey ts msg 
+            Nothing -> Stop <$ logE " unknown error, bot stop" 
   where
     url =
       "https://lp.vk.com/wh" ++ idGroup ++ "?act=a_check&key=" ++ secKey
         ++ "&ts="
         ++ ts
         ++ "&wait=25"
-    msg :: Value -> Parser [DataMessage]
-    msg = withObject "inMessage" $ \o -> o .: "updates"    
+   
     
 extractSecKey :: AsValue s => s -> Maybe (String, Integer)
 extractSecKey body =
   body ^? key "response" . key "key" . _String >>= \secKey ->
-    body ^? key "response" . key "ts" . _Integer >>= \ts -> Just (T.unpack secKey, ts)
+  body ^? key "response" . key "ts" . _Integer >>= \ts -> Just (T.unpack secKey, ts)
 
 extractMessage :: AsValue s => s -> Maybe (Integer, Text)
 extractMessage body =
   body ^? key "updates" . key "object" . key "from_id" . _Integer >>= \from_id ->
-    body ^? key "updates" . key "object" . key "text" . _String >>= \msg -> Just (from_id, msg)
+  body ^? key "updates" . key "object" . key "text" . _String >>= \msg -> Just (from_id, msg)
+
+sendMessage secKey ts msg = do
+ body <- requestVK' url
+ case body of
+   Message body' ->
+     case body' ^? key "error" . key "error_msg" . _String of
+       Just err -> do
+        logE $ "error sending message " <> err <> " app will be stopped"
+        pure Stop
+       Nothing -> do
+           logI $ "sending message: " <> T.pack(text (_object msg))
+           logI "awaiting message"
+           getMessageVK secKey (show ts) 
+ where
+    url = "https://api.vk.com/method/messages.send?user_id=" <>  show(from_id(_object msg)) 
+           <> "&message=" <> text (_object msg)  <>   "&title=gh&access_token="  <>  keyGroup <> "&v=5.50"
