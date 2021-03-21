@@ -62,7 +62,7 @@ logger' conf m  = loop
        loop      
      Stop s -> do
           putMVar s ()
-
+{--
 api :: 
    MonadThrow m
     => MonadIO m
@@ -73,7 +73,8 @@ api = do
  logI "bot start"
  _ <- run
  return ()
-
+--}
+api :: 
  
  
 

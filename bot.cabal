@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1c9302839793ac95ab18e4c8db8d6e9c469c9c434a62821222471f954e655cd3
+-- hash: 88a6798d082730ae0dfe010418ee65eb2c7be0694f349d962edc46c4062e0da9
 
 name:           bot
 version:        0.1.0.0
@@ -34,6 +34,7 @@ library
       Logger.Tmp
       Network.Api
       Network.Class
+      Network.Types
   other-modules:
       Paths_bot
   hs-source-dirs:
