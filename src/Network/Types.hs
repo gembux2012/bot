@@ -1,7 +1,14 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
-module Network.Types where
+module Network.Types
+ (ResponseMessage(..),
+  --ResponseMessage'(..),
+  MessageVK(..),
+  MessageUpdates(..),
+  MessageObject(..)
+ )
+where
 
 import GHC.Generics
 import qualified Data.ByteString.Char8 as BS8
@@ -9,41 +16,42 @@ import Data.Aeson
 
 
 import Data.Aeson.Types (FromJSON)
+import Data.Text.Internal.Lazy (Text)
 
 
-data ResponseMessage = Message BS8.ByteString | Stop
+--data ResponseMessage' = Message' BS8.ByteString | Stop
+
+data ResponseMessage
+  = NoResponse | Message BS8.ByteString | Error String | Auth (String, Integer) | MessageVk MessageVK
+
 
 data Button = DataButton
  {
 
  }
-data MessageVK = MessageVK
- { ts :: String,
-   updates :: [MessageUpdates]
-  }
  deriving (Generic, FromJSON, Show)
 
 
-
+data MessageVK = MessageVK
+ { ts :: String,
+   updates :: [MessageUpdates]
+ }
+ deriving (Generic, FromJSON, Show)
   
 data MessageUpdates = MessageUpdates
   { _type :: String,
-    _object :: Value,
+    _object :: MessageObject,
     _group_id :: Integer,
     _event_id :: String
   }
   deriving (Generic, Show)
-instance FromJSON MessageUpdates where
-    parseJSON = withObject "m_updates" $ \o -> do
-     _type <- o .: "type"
-     when( "type" == "wall_post_new") _object <- 
-     
+
 
 instance FromJSON MessageUpdates where
   parseJSON = genericParseJSON defaultOptions {
                 fieldLabelModifier = drop 1 }
 
-data MessageObjectWall = MessageObject
+data MessageObject = ObjectWall
  { id :: Int,
    from_id :: Integer,
    owner_id :: Integer,
@@ -55,6 +63,9 @@ data MessageObjectWall = MessageObject
    created_by :: Integer,
    can_delete :: Int,
    comments :: MessageComment
+ }  | ObjectUser
+ {
+
  }
   deriving (Generic, FromJSON, Show)
 

@@ -13,6 +13,10 @@ import Data.Text (Text, append, pack)
 import GHC.Stack.Types (HasCallStack)
 import Logger.Adt (Logger (..), Priority (..))
 
+
+
+--newtype Logger m = Logger {dologLn :: HasCallStack => Text -> m ()}
+
 class Monad m => Log m where
   logI :: HasCallStack => Text -> m ()
   logW :: HasCallStack => Text -> m ()

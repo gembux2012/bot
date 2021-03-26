@@ -19,14 +19,19 @@ import           Logger.App             (printLog)
 
 import           Logger.Adt             (Logger(..), )
 import           Logger.Class           (Log (..))
-import Data.Text (Text, pack)
+import Data.Text (Text, pack, unpack)
 --import Data.ByteString.Char8 (pack)
-import Network.Api (run)
+import Network.Api 
 import Control.Monad.Catch.Pure (MonadThrow)
 import Control.Monad.Base (MonadBase)
 import Control.Concurrent
 
-data LogCommand = Message Text | Stop (MVar ())
+import Network.Class
+import Network.Types
+import Network.Api
+
+
+data LogCommand = MessageL Text | Stop (MVar ())
 
 
 main :: IO ()
@@ -36,11 +41,8 @@ main = do
   let config = snd conf
   putStrLn  $ fst conf
   let app = Application
-            { logger = Logger
-              {
-                dologLn  = putMVar m . Message
-                              
-              }
+            { logger = Logger {dologLn  = putMVar m . MessageL },                
+              dorequest = DoRequest authVK
             }
   forkIO $ logger' config m
   runReaderT api  app
@@ -57,7 +59,7 @@ logger' conf m  = loop
    loop   = do
     cmd <- takeMVar m
     case cmd of
-     Message msg -> do
+     MessageL msg -> do
        printLog  (logOpts conf)  msg 
        loop      
      Stop s -> do
@@ -66,20 +68,30 @@ logger' conf m  = loop
 api :: 
    MonadThrow m
     => MonadIO m
-    =>MonadBase IO m
-    => Log m 
+    -- =>MonadBase IO m
+   => Log m 
    => m ()
+
 api = do  
  logI "bot start"
  _ <- run
  return ()
 --}
-api :: 
- 
+api =
+ --result <- authVK
+ case auth of
+  Error err -> 
+   logE $  pack err
+   --pure()
+  Auth (secKey,ts) -> do
+    logI $ pack (show secKey ++ " " ++ show ts)
+    --pure () 
  
 
-newtype Application m
-  = Application {logger :: Logger m}
+data  Application m   = Application 
+  {logger :: Logger m ,
+   dorequest :: DoRequest m 
+  }
   deriving stock Generic
 
 instance Has (Logger m) (Application m) where
