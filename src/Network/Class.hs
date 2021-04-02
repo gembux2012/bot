@@ -21,4 +21,4 @@ instance
     Monad m
   ) =>
   RequestSN (ReaderT r m)   where 
-   auth = asks getter >>= \(DoRequest doReq) -> lift doReq 
+   request  = asks getter >>= \(DoRequest doReq) -> lift doReq 
