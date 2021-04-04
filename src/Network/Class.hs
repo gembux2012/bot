@@ -2,8 +2,9 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Network.Class
-( DoRequest(..),
-  RequestSN(..)
+( Requestable(..),
+  Req(..),
+ 
 )
 where
 
@@ -11,14 +12,14 @@ import Network.Types
 import Data.Has (Has, getter)
 import Control.Monad.Reader (ReaderT, asks, lift)
 
-class Monad m => RequestSN m where
- auth ::  m ResponseMessage
+class Monad m => Req m where
+ request :: Method -> Url -> m ResponseMessage
  
-newtype DoRequest m = DoRequest  {doRequest :: m ResponseMessage}
+newtype Requestable m = Requestable  {doRequest :: Method -> Url -> m ResponseMessage}
 
 instance
-  ( Has (DoRequest m) r,
+  ( Has (Requestable m) r,
     Monad m
   ) =>
-  RequestSN (ReaderT r m)   where 
-   auth = asks getter >>= \(DoRequest doReq) -> lift doReq 
+  Req (ReaderT r m)   where 
+   request m url  = asks getter >>= \(Requestable request) -> lift $ request m url

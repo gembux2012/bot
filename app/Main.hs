@@ -26,9 +26,9 @@ import Control.Monad.Catch.Pure (MonadThrow)
 import Control.Monad.Base (MonadBase)
 import Control.Concurrent
 
-import Network.Class
-import Network.Types
-import Network.Api
+import Network.Class (Requestable(..),request,Req)
+import Network.Types (ResponseMessage(..),Method(..),Url(..))
+import Network.Api ()
 
 
 data LogCommand = MessageL Text | Stop (MVar ())
@@ -41,10 +41,18 @@ main = do
   let config = snd conf
   putStrLn  $ fst conf
   let app = Application
-            { logger = Logger {dologLn  = putMVar m . MessageL },                
-              dorequest = DoRequest authVK
+            { logger = Logger 
+              {
+                dologLn  = putMVar m . MessageL
+              },
+              do_request = Requestable
+              {
+                doRequest =
+                 requestVK 
+              }                 
             }
   forkIO $ logger' config m
+  
   runReaderT api  app
  
   s <- newEmptyMVar
@@ -71,26 +79,31 @@ api ::
     -- =>MonadBase IO m
    => Log m 
    => m ()
-
-api = do  
- logI "bot start"
- _ <- run
- return ()
 --}
-api =
- --result <- authVK
- case auth of
-  Error err -> 
-   logE $  pack err
-   --pure()
+
+api ::
+ Log m =>
+ Req m =>  m () 
+api = do 
+ logI "start bot"
+ _ <- runBot GetKeyAccess getKeyAccessUrl 
+ pure()
+ 
+runBot m url = do 
+ resp <- request m url  
+ case  resp  of
+  Error err -> do 
+      logE $  pack err
+      pure()
   Auth (secKey,ts) -> do
-    logI $ pack (show secKey ++ " " ++ show ts)
-    --pure () 
+   logI $ pack (show secKey ++ " " ++ show ts)
+   runBot  GetMessage (getMessageUrl secKey ts)
+   
  
 
 data  Application m   = Application 
   {logger :: Logger m ,
-   dorequest :: DoRequest m 
+   do_request :: Requestable m 
   }
   deriving stock Generic
 
