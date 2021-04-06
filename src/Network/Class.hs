@@ -3,7 +3,8 @@
 
 module Network.Class
 ( DoRequest(..),
-  RequestSN(..)
+  GetMessageVK (..)
+  
 )
 where
 
@@ -11,14 +12,14 @@ import Network.Types
 import Data.Has (Has, getter)
 import Control.Monad.Reader (ReaderT, asks, lift)
 
-class Monad m => RequestSN m where
- auth ::  m ResponseMessage
+class Monad m => GetMessageVK m where
+ request  :: Method -> Url ->  m ResponseMessage
  
-newtype DoRequest m = DoRequest  {doRequest :: m ResponseMessage}
+newtype DoRequest m = DoRequest  {doRequest :: Method -> Url ->  m ResponseMessage}
 
 instance
   ( Has (DoRequest m) r,
     Monad m
   ) =>
-  RequestSN (ReaderT r m)   where 
-   request  = asks getter >>= \(DoRequest doReq) -> lift doReq 
+  GetMessageVK (ReaderT r m)   where 
+   request m u  = asks getter >>= \(DoRequest doReq) -> lift $ doReq m u  

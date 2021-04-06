@@ -3,10 +3,11 @@
 
 module Network.Types
  (ResponseMessage(..),
-  --ResponseMessage'(..),
+  Method(..),
   MessageVK(..),
   MessageUpdates(..),
-  MessageObject(..)
+  MessageObject(..),
+  Url(..)
  )
 where
 
@@ -17,12 +18,23 @@ import Data.Aeson
 
 import Data.Aeson.Types (FromJSON)
 import Data.Text.Internal.Lazy (Text)
+import Network.HTTP.Simple (Query)
 
 
 --data ResponseMessage' = Message' BS8.ByteString | Stop
 
+data Method = GetKeyAccess | GetMessage
+ deriving( Eq)
+
+data Url= Url
+ { requestHost :: BS8.ByteString,
+   requestMethod :: BS8.ByteString,
+   requestPath :: BS8.ByteString,
+   requestQS :: Query 
+ } 
+
 data ResponseMessage
-  = NoResponse | Message BS8.ByteString | Error String | Auth (String, Integer) | MessageVk MessageVK
+  = NoResponse | Message BS8.ByteString | Error String | Auth (BS8.ByteString, BS8.ByteString) | MessageVk MessageVK
 
 
 data Button = DataButton

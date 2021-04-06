@@ -19,6 +19,7 @@ import           Logger.App             (printLog)
 
 import           Logger.Adt             (Logger(..), )
 import           Logger.Class           (Log (..))
+import qualified Data.ByteString.Char8 as BS8
 import Data.Text (Text, pack, unpack)
 --import Data.ByteString.Char8 (pack)
 import Network.Api 
@@ -42,7 +43,7 @@ main = do
   putStrLn  $ fst conf
   let app = Application
             { logger = Logger {dologLn  = putMVar m . MessageL },                
-              dorequest = DoRequest authVK
+              dorequest = DoRequest{ doRequest = requestVK } 
             }
   forkIO $ logger' config m
   runReaderT api  app
@@ -64,30 +65,41 @@ logger' conf m  = loop
        loop      
      Stop s -> do
           putMVar s ()
-{--
+
 api :: 
-   MonadThrow m
-    => MonadIO m
-    -- =>MonadBase IO m
-   => Log m 
-   => m ()
+   Log m 
+   => GetMessageVK m
+   => m ResponseMessage
+api = botStart GetKeyAccess getKeyAccessUrl  
 
-api = do  
+botStart m url = do
  logI "bot start"
- _ <- run
- return ()
---}
-api =
- --result <- authVK
- case auth of
-  Error err -> 
-   logE $  pack err
-   --pure()
-  Auth (secKey,ts) -> do
-    logI $ pack (show secKey ++ " " ++ show ts)
-    --pure () 
+ logI "request an access key"
+ result <- request m url 
+ case result of 
+  Error err -> do 
+   logE "err"
+   pure NoResponse
+  Auth (key,ts) -> do 
+   logI  " access key received"
+   botStart GetMessage (getMessageUrl key ts)
+  MessageVk mess -> do
+   logI $ pack(show mess)
+   pure ()   
+receivingMessage key ts = do
+ botStart GetMessage (getMessageUrl key ts)
+ receivingMessage key ts
  
-
+data Access  = Access
+ { key :: BS8.ByteString,
+   ts :: BS8.ByteString
+ } 
+ 
+access k t =  Access 
+ { key = k,
+   ts = t
+ }
+ 
 data  Application m   = Application 
   {logger :: Logger m ,
    dorequest :: DoRequest m 
@@ -98,3 +110,6 @@ instance Has (Logger m) (Application m) where
   getter = logger
   modifier f a = a {logger = f . logger $ a}
 
+instance Has (DoRequest m) (Application m) where
+  getter = dorequest
+  modifier f a = a {dorequest = f . dorequest $ a}

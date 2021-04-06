@@ -14,8 +14,7 @@
 {-# LANGUAGE Strict #-}
 
 module Network.Api
-  ( 
-  )
+  
 where
 
 
@@ -45,8 +44,7 @@ import Network.HTTP.Conduit (http)
 import Network.HTTP.Simple
 import Data.Aeson.Types (Parser, parseMaybe, FromJSON, Value, withObject, (.:), fieldLabelModifier, genericParseJSON, defaultOptions)
 import Data.Aeson (decodeStrict,parseJSON)
-import Network.Types
-import Network.Types( ResponseMessage(..),MessageObject(..))
+import Network.Types ( ResponseMessage(..),MessageObject(..), Method(..), Url(..), MessageVK(..))
 
 --import Network.Types (MessageVK)
 
@@ -66,20 +64,15 @@ keyUser = "454751226"
 
 versionService = "5.50" :: BS8.ByteString
 
-uriVK = "api.vk.com/method/"
+uriVK = "api.vk.com"
 
 newtype SecKey = SecKey { secKey :: String }
-data Url= Url
- { requestHost :: BS8.ByteString,
-   requestMethod :: BS8.ByteString,
-   requestPath :: BS8.ByteString,
-   requestQS :: Query 
- } 
+
 
 getKeyAccessUrl  = Url 
  {requestHost = uriVK,
   requestMethod = "GET",
-  requestPath = "groups.getLongPollServer" ,
+  requestPath = "method/groups.getLongPollServer" ,
   requestQS = [("access_token", Just keyGroup),("group_id", Just idGroup),("v", Just versionService)]
  }
  
@@ -87,7 +80,7 @@ getMessageUrl k ts = Url
  {requestHost = "lp.vk.com",
    requestMethod = "GET",
    requestPath = "wh" <> idGroup ,
-   requestQS = [("act", Just "a_check" ),("key", Just k),("ts", Just ts),("wait", Just 25)]
+   requestQS = [("act", Just "a_check" ),("key", Just k),("ts", Just ts),("wait", Just "25")]
   } 
 {--
 requestVK' ::
@@ -97,7 +90,7 @@ requestVK' ::
   String ->
    m ResponseMessage
    --}
-requestVK :: String -> Url -> m () 
+requestVK ::MonadIO m => Monad m => Applicative m => Method -> Url -> m ResponseMessage 
 requestVK method Url{..} = do
   let request
         = setRequestHost requestHost  
@@ -112,66 +105,47 @@ requestVK method Url{..} = do
   --logI $ T.pack url
   let status = getResponseStatusCode response
   case status of
-    200 -> requestVK $ prependRequest method (getResponseBody response)
-    _ -> logE $ T.pack  ("method " <> show request <> " status " <> show status <> " app will be stopped")
+    200 -> pure $ prependRequest method (getResponseBody response)
+    _ -> pure $ Error   ("method " <> show request <> " status " <> show status <> " app will be stopped")
           
 
-prependRequest m b 
-    | m == "getKeyAccess" = getKeyAccess b
-    | m == "getMessageVK" = getMessageVK b
-
-
-getKeyAccess body  = 
-  case body ^? key "error" . key "error_msg" . _String of
-    Just error -> logE $ "authorisation error " <>   error <> " app will be stopped"
-    Nothing ->  
-      case extractSecKey body of
-        Nothing  ->  logE  " unknown error, bot stop"
-        Just (sk, ts) -> "getMessageVk" (getMessageUrl   (BS8.pack  sk)  (BS8.pack $ show ts))
+prependRequest m body 
+    | m == GetKeyAccess = 
+         case body ^? key "error" . key "error_msg" . _String of
+             Just error -> Error $ "authorisation error " <>  T.unpack error <> " app will be stopped"
+             Nothing ->  
+               case extractSecKey body of
+                 Nothing  ->  Error  " unknown error, bot stop"
+                 Just (sk, ts) -> Auth (sk,ts)
  
+    | m == GetMessage = 
+        case body ^? key "failed" . _Integer of
+                Just failed -> 
+                  case failed of
+                    1 -> 
+                      case body ^? key "ts" . _Integer of
+                        Nothing ->  Error " unknown error, bot stop"
+                        Just ts -> Auth ("", encodeUtf8 (T.pack(show ts)))
+                    _ -> Auth ("","")
+                Nothing ->  
+                  case  decodeStrict body :: Maybe MessageVK of
+                    Just mess  ->  MessageVk mess 
+                    Nothing ->  Error  " unknown error, bot stop"
+              
 
-getMessageVK body = 
-      case body ^? key "failed" . _Integer of
-        Just failed -> do
-          case failed of
-            1 -> do
-              case body ^? key "ts" . _Integer of
-                Nothing ->  logE " unknown error, bot stop"
-                Just ts -> getMessageVK secKey (show ts')
-            _ -> authVK
-        Nothing -> do 
-          
-          case  decodeStrict body' :: Maybe MessageVK of
-            Just mess  -> pure $ MessageVk mess 
-            Nothing -> pure $ Error  " unknown error, bot stop"
-             {--
-             case updates of
-              [] -> do  
-                logI "not message"    
-                logI "awaiting message"
-                getMessageVK secKey (show ts)
-              [msg] -> do
-               logI $ "message received: " <>  T.pack(text (_object msg))
-               sendMessage secKey ts msg 
-             --}
-  where
-    url =
-      "https://lp.vk.com/wh" ++ idGroup ++ "?act=a_check&key=" ++ secKey
-        ++ "&ts="
-        ++ ts
-        ++ "&wait=25"
-   
-    
-extractSecKey :: AsValue s => s -> Maybe (String, Integer)
+
+extractSecKey :: AsValue s => s -> Maybe (BS8.ByteString, BS8.ByteString)
 extractSecKey body =
   body ^? key "response" . key "key" . _String >>= \secKey ->
-  body ^? key "response" . key "ts" . _Integer >>= \ts -> Just (T.unpack secKey, ts)
+  body ^? key "response" . key "ts" . _Integer >>= \ts -> Just (encodeUtf8 secKey, encodeUtf8 (T.pack(show ts)))
 
 extractMessage :: AsValue s => s -> Maybe (Integer, Text)
 extractMessage body =
   body ^? key "updates" . key "object" . key "from_id" . _Integer >>= \from_id ->
   body ^? key "updates" . key "object" . key "text" . _String >>= \msg -> Just (from_id, msg)
 
+
+{--
 sendMessage secKey ts msg = do
  body <- requestVK' url
  case body of
@@ -185,3 +159,4 @@ sendMessage secKey ts msg = do
  where
     url = "https://api.vk.com/method/messages.send?user_id=" <>  show(from_id(_object msg)) 
            <> "&message=" <> text (_object msg)  <>   "&title=gh&access_token="  <>  keyGroup <> "&v=5.50"
+--}           
