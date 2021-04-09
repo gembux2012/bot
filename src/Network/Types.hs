@@ -23,7 +23,7 @@ import Network.HTTP.Simple (Query)
 
 --data ResponseMessage' = Message' BS8.ByteString | Stop
 
-data Method = GetKeyAccess | GetMessage
+data Method = GetKeyAccess | GetMessage | SendMessage
  deriving( Eq)
 
 data Url= Url
@@ -63,7 +63,7 @@ instance FromJSON MessageUpdates where
   parseJSON = genericParseJSON defaultOptions {
                 fieldLabelModifier = drop 1 }
 
-data MessageObject = ObjectWall
+data MessageObject = MessageObject
  { id :: Int,
    from_id :: Integer,
    owner_id :: Integer,
@@ -75,10 +75,7 @@ data MessageObject = ObjectWall
    created_by :: Integer,
    can_delete :: Int,
    comments :: MessageComment
- }  | ObjectUser
- {
-
- }
+ } 
   deriving (Generic, FromJSON, Show)
 
 data MessageComment = MessageComment

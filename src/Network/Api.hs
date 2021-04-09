@@ -75,22 +75,28 @@ getKeyAccessUrl  = Url
   requestPath = "method/groups.getLongPollServer" ,
   requestQS = [("access_token", Just keyGroup),("group_id", Just idGroup),("v", Just versionService)]
  }
- 
+
 getMessageUrl k ts = Url
  {requestHost = "lp.vk.com",
    requestMethod = "GET",
    requestPath = "wh" <> idGroup ,
    requestQS = [("act", Just "a_check" ),("key", Just k),("ts", Just ts),("wait", Just "25")]
   } 
-{--
-requestVK' ::
-  MonadThrow m =>
-  MonadIO m =>
-  --MonadBase IO m =>
-  String ->
-   m ResponseMessage
-   --}
-requestVK ::MonadIO m => Monad m => Applicative m => Method -> Url -> m ResponseMessage 
+ 
+sendMessageUrl  user_id message = Url
+ {requestHost = "api.vk.com",
+   requestMethod = "GET",
+   requestPath = "method/messages.send" ,
+   requestQS = [("user_id", Just user_id ),("message", Just message),
+               ("title", Just ""),("access_token", Just keyGroup),("v", Just versionService)]
+  } 
+
+
+requestVK ::
+ MonadIO m => 
+ Monad m => 
+ Applicative m => 
+ Method -> Url -> m ResponseMessage 
 requestVK method Url{..} = do
   let request
         = setRequestHost requestHost  
@@ -130,9 +136,14 @@ prependRequest m body
                 Nothing ->  
                   case  decodeStrict body :: Maybe MessageVK of
                     Just mess  ->  MessageVk mess 
-                    Nothing ->  Error  " unknown error, bot stop"
+                    Nothing ->  Error  " invalid json! bot stop"
               
-
+   | m == SendMessage =
+      case body ^? key "error" . key "error_msg" . _String of
+           Just error -> Error $   T.unpack error 
+           Nothing -> 
+            case body ^? key "response"  . _String of
+             Just -> 
 
 extractSecKey :: AsValue s => s -> Maybe (BS8.ByteString, BS8.ByteString)
 extractSecKey body =

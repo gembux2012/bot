@@ -26,15 +26,18 @@ import Network.Api
 import Control.Monad.Catch.Pure (MonadThrow)
 import Control.Monad.Base (MonadBase)
 import Control.Concurrent
+import qualified Data.Map as Map
 
 import Network.Class
 import Network.Types
 import Network.Api
+import Data.Text.Encoding (encodeUtf8)
+import Data.Map (Map)
 
 
 data LogCommand = MessageL Text | Stop (MVar ())
 
-
+access =("","")
 main :: IO ()
 main = do
   conf <- readConfig
@@ -46,6 +49,7 @@ main = do
               dorequest = DoRequest{ doRequest = requestVK } 
             }
   forkIO $ logger' config m
+  
   runReaderT api  app
  
   s <- newEmptyMVar
@@ -70,35 +74,36 @@ api ::
    Log m 
    => GetMessageVK m
    => m ResponseMessage
-api = botStart GetKeyAccess getKeyAccessUrl  
+api  = botStart GetKeyAccess getKeyAccessUrl "" ""   
 
-botStart m url = do
- logI "bot start"
- logI "request an access key"
+botStart m url key ts = do
+ --let access' = ("","")
+ if m == GetKeyAccess then  
+  logI "request an access key"
+   else
+    logI "waiting message"
  result <- request m url 
  case result of 
   Error err -> do 
-   logE "err"
+   logE $ pack err
    pure NoResponse
   Auth (key,ts) -> do 
+   --let access' =(key,ts)
    logI  " access key received"
-   botStart GetMessage (getMessageUrl key ts)
-  MessageVk mess -> do
-   logI $ pack(show mess)
-   pure ()   
-receivingMessage key ts = do
- botStart GetMessage (getMessageUrl key ts)
- receivingMessage key ts
+   botStart GetMessage (getMessageUrl key ts ) key ts
+  MessageVk MessageVK{..} -> do
+   logI $ pack("message received: " ++ (show.text._object $ head updates) ++ "from: " 
+      ++ (show.from_id._object $ head updates))    --show (from_id (_object (head updates))))
+   case dispatcherAnswer MessageVK{..} of 
+    SendMessage -> do 
+      botStart SendMessage (sendMessageUrl  (BS8.pack.show.from_id._object $ head updates) 
+       (BS8.pack.text._object $ head updates)) key (encodeUtf8 $ pack ts) 
+      botStart GetMessage (getMessageUrl key (encodeUtf8 $ pack ts)) key (encodeUtf8 $ pack ts)
  
-data Access  = Access
- { key :: BS8.ByteString,
-   ts :: BS8.ByteString
- } 
+dispatcherAnswer MessageVK{..} = 
+ case text._object $ head updates  of -- /= "/" = botStart SendMessage   
+   _ -> SendMessage 
  
-access k t =  Access 
- { key = k,
-   ts = t
- }
  
 data  Application m   = Application 
   {logger :: Logger m ,
