@@ -2,7 +2,13 @@
 {-# LANGUAGE DeriveAnyClass #-}
 
 module Network.Types
- 
+ (ResponseMessage(..),
+  Method(..),
+  MessageVK(..),
+  MessageUpdates(..),
+  MessageObject(..),
+  Url(..)
+ )
 where
 
 import GHC.Generics
@@ -15,8 +21,10 @@ import Data.Text.Internal.Lazy (Text)
 import Network.HTTP.Simple (Query)
 
 
-data Method = GetKeyAccess | GetMessage 
- deriving (Eq)
+--data ResponseMessage' = Message' BS8.ByteString | Stop
+
+data Method = GetKeyAccess | GetMessage | SendMessage
+ deriving( Eq)
 
 data Url= Url
  { requestHost :: BS8.ByteString,
@@ -26,7 +34,7 @@ data Url= Url
  } 
 
 data ResponseMessage
-  = NoResponse | Message BS8.ByteString | Error String | Auth ( BS8.ByteString,  BS8.ByteString) | MessageVk MessageVK
+  = NoResponse | Message BS8.ByteString | Error String | Auth (BS8.ByteString, BS8.ByteString) | MessageVk MessageVK
 
 
 data Button = DataButton
@@ -55,7 +63,7 @@ instance FromJSON MessageUpdates where
   parseJSON = genericParseJSON defaultOptions {
                 fieldLabelModifier = drop 1 }
 
-data MessageObject = ObjectWall
+data MessageObject = MessageObject
  { id :: Int,
    from_id :: Integer,
    owner_id :: Integer,
@@ -67,10 +75,7 @@ data MessageObject = ObjectWall
    created_by :: Integer,
    can_delete :: Int,
    comments :: MessageComment
- }  | ObjectUser
- {
-
- }
+ } 
   deriving (Generic, FromJSON, Show)
 
 data MessageComment = MessageComment

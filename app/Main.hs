@@ -19,21 +19,25 @@ import           Logger.App             (printLog)
 
 import           Logger.Adt             (Logger(..), )
 import           Logger.Class           (Log (..))
+import qualified Data.ByteString.Char8 as BS8
 import Data.Text (Text, pack, unpack)
 --import Data.ByteString.Char8 (pack)
 import Network.Api 
 import Control.Monad.Catch.Pure (MonadThrow)
 import Control.Monad.Base (MonadBase)
 import Control.Concurrent
+import qualified Data.Map as Map
 
-import Network.Class (Requestable(..),request,Req)
-import Network.Types (ResponseMessage(..),Method(..),Url(..))
-import Network.Api ()
+import Network.Class
+import Network.Types
+import Network.Api
+import Data.Text.Encoding (encodeUtf8)
+import Data.Map (Map)
 
 
 data LogCommand = MessageL Text | Stop (MVar ())
 
-
+access =("","")
 main :: IO ()
 main = do
   conf <- readConfig
@@ -41,15 +45,8 @@ main = do
   let config = snd conf
   putStrLn  $ fst conf
   let app = Application
-            { logger = Logger 
-              {
-                dologLn  = putMVar m . MessageL
-              },
-              do_request = Requestable
-              {
-                doRequest =
-                 requestVK 
-              }                 
+            { logger = Logger {dologLn  = putMVar m . MessageL },                
+              dorequest = DoRequest{ doRequest = requestVK } 
             }
   forkIO $ logger' config m
   
@@ -72,38 +69,45 @@ logger' conf m  = loop
        loop      
      Stop s -> do
           putMVar s ()
-{--
+
 api :: 
-   MonadThrow m
-    => MonadIO m
-    -- =>MonadBase IO m
-   => Log m 
-   => m ()
---}
+   Log m 
+   => GetMessageVK m
+   => m ResponseMessage
+api  = botStart GetKeyAccess getKeyAccessUrl "" ""   
 
-api ::
- Log m =>
- Req m =>  m () 
-api = do 
- logI "start bot"
- _ <- runBot GetKeyAccess getKeyAccessUrl 
- pure()
- 
-runBot m url = do 
- resp <- request m url  
- case  resp  of
+botStart m url key ts = do
+ --let access' = ("","")
+ if m == GetKeyAccess then  
+  logI "request an access key"
+   else
+    logI "waiting message"
+ result <- request m url 
+ case result of 
   Error err -> do 
-      logE $  pack err
-      pure()
-  Auth (secKey,ts) -> do
-   logI $ pack (show secKey ++ " " ++ show ts)
-   runBot  GetMessage (getMessageUrl secKey ts)
-   
+   logE $ pack err
+   pure NoResponse
+  Auth (key,ts) -> do 
+   --let access' =(key,ts)
+   logI  " access key received"
+   botStart GetMessage (getMessageUrl key ts ) key ts
+  MessageVk MessageVK{..} -> do
+   logI $ pack("message received: " ++ (show.text._object $ head updates) ++ "from: " 
+      ++ (show.from_id._object $ head updates))    --show (from_id (_object (head updates))))
+   case dispatcherAnswer MessageVK{..} of 
+    SendMessage -> do 
+      botStart SendMessage (sendMessageUrl  (BS8.pack.show.from_id._object $ head updates) 
+       (BS8.pack.text._object $ head updates)) key (encodeUtf8 $ pack ts) 
+      botStart GetMessage (getMessageUrl key (encodeUtf8 $ pack ts)) key (encodeUtf8 $ pack ts)
  
-
+dispatcherAnswer MessageVK{..} = 
+ case text._object $ head updates  of -- /= "/" = botStart SendMessage   
+   _ -> SendMessage 
+ 
+ 
 data  Application m   = Application 
   {logger :: Logger m ,
-   do_request :: Requestable m 
+   dorequest :: DoRequest m 
   }
   deriving stock Generic
 
@@ -111,3 +115,6 @@ instance Has (Logger m) (Application m) where
   getter = logger
   modifier f a = a {logger = f . logger $ a}
 
+instance Has (DoRequest m) (Application m) where
+  getter = dorequest
+  modifier f a = a {dorequest = f . dorequest $ a}
