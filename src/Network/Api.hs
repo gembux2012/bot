@@ -44,7 +44,8 @@ import Network.HTTP.Conduit (http)
 import Network.HTTP.Simple
 import Data.Aeson.Types (Parser, parseMaybe, FromJSON, Value, withObject, (.:), fieldLabelModifier, genericParseJSON, defaultOptions)
 import Data.Aeson (decodeStrict,parseJSON)
-import Network.Types ( ResponseMessage(..),MessageObject(..), Method(..), Url(..), MessageVK(..))
+import Control.Monad.Error
+import Network.Types 
 
 --import Network.Types (MessageVK)
 
@@ -115,8 +116,15 @@ requestVK method Url{..} = do
     _ -> pure $ Error   ("method " <> show request <> " status " <> show status <> " app will be stopped")
           
 
+prependRequest :: Method -> BS8.ByteString ->  Either Text (BS8.ByteString, BS8.ByteString)
 prependRequest m body 
+    {--
     | m == GetKeyAccess = 
+        body ^? key "error" . key "error_msg" . _String >>= \err ->        -- Error $ "authorisation error " <>  T.unpack (error) <> " app will be stopped"
+            body ^? key "response" . key "key" . _String >>= \secKey ->
+             body ^? key "response" . key "ts" . _Integer >>= \ts -> Either  err 
+                                                                      Right  (encodeUtf8 secKey, encodeUtf8 (T.pack(show ts)))
+         
          case body ^? key "error" . key "error_msg" . _String of
              Just error -> Error $ "authorisation error " <>  T.unpack error <> " app will be stopped"
              Nothing ->  
@@ -137,14 +145,19 @@ prependRequest m body
                   case  decodeStrict body :: Maybe MessageVK of
                     Just mess  ->  MessageVk mess 
                     Nothing ->  Error  " invalid json! bot stop"
-              
+       --}       
    | m == SendMessage =
+      let f x = Right x in  
+      body ^? key "error" . key "error_msg" . _String   >>= \err  ->
+      body ^? key "response"  . _String >>= \resp ->( either Just (const Nothing) err   >> Right resp >>= f :: Either Text BS8.ByteString)
+      
+      {--
       case body ^? key "error" . key "error_msg" . _String of
            Just error -> Error $   T.unpack error 
            Nothing -> 
             case body ^? key "response"  . _String of
              Just -> 
-
+--}
 extractSecKey :: AsValue s => s -> Maybe (BS8.ByteString, BS8.ByteString)
 extractSecKey body =
   body ^? key "response" . key "key" . _String >>= \secKey ->

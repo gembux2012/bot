@@ -2,10 +2,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Network.Class
-( DoRequest(..),
-  GetMessageVK (..)
-  
-)
+
 where
 
 import Network.Types

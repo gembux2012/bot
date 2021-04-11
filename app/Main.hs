@@ -46,7 +46,7 @@ main = do
   putStrLn  $ fst conf
   let app = Application
             { logger = Logger {dologLn  = putMVar m . MessageL },                
-              dorequest = DoRequest{ doRequest = requestVK } 
+              dorequest =DoRequest { doRequest = requestVK }
             }
   forkIO $ logger' config m
   
