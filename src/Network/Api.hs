@@ -30,7 +30,7 @@ import Control.Monad.Base
 import Control.Monad.Catch
 import Control.Monad.IO.Class
 --import Data.Aeson
-import Data.Aeson.Lens (AsPrimitive, AsValue, _Array, _Integer, _JSON, _Object, _String, key, values, values)
+import qualified Data.Aeson.Lens as AL -- ( AsPrimitive, AsValue, _Array, _Integer, _JSON, _Object, _String, key, values, values, values )
 import Data.Aeson.Lens (values)
 import qualified Data.ByteString.Char8 as BS8
 import Data.ByteString.Char8 (pack)
@@ -44,8 +44,12 @@ import Network.HTTP.Conduit (http)
 import Network.HTTP.Simple
 import Data.Aeson.Types (Parser, parseMaybe, FromJSON, Value, withObject, (.:), fieldLabelModifier, genericParseJSON, defaultOptions)
 import Data.Aeson (decodeStrict,parseJSON)
-import Control.Monad.Error
+import Data.Either 
+--import Control.Monad.Error
 import Network.Types 
+import Network.ErrorTypes
+import Data.Maybe 
+import Network.ErrorTypes (ErrorVK)
 
 --import Network.Types (MessageVK)
 
@@ -97,7 +101,7 @@ requestVK ::
  MonadIO m => 
  Monad m => 
  Applicative m => 
- Method -> Url -> m ResponseMessage 
+ Method -> Url -> m (Either ErrorVK Message) 
 requestVK method Url{..} = do
   let request
         = setRequestHost requestHost  
@@ -112,25 +116,17 @@ requestVK method Url{..} = do
   --logI $ T.pack url
   let status = getResponseStatusCode response
   case status of
-    200 -> pure $ prependRequest method (getResponseBody response)
-    _ -> pure $ Error   ("method " <> show request <> " status " <> show status <> " app will be stopped")
+    200 -> pure $ maybeToEither (decodeStrict.getResponseBody $ response :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
+                                (decodeStrict.getResponseBody $ response :: Maybe Message)
+    _ -> pure.Left $ ErrorVK{ error = Err {error_msg = "request return status ", error_code = status}}   -- $ T.pack ("method " <> show request <> " status " <> show status <> " app will be stopped")
           
 
-prependRequest :: Method -> BS8.ByteString ->  Either Text (BS8.ByteString, BS8.ByteString)
+prependRequest :: Method -> BS8.ByteString ->  Either Text Message  
 prependRequest m body 
-    {--
     | m == GetKeyAccess = 
-        body ^? key "error" . key "error_msg" . _String >>= \err ->        -- Error $ "authorisation error " <>  T.unpack (error) <> " app will be stopped"
-            body ^? key "response" . key "key" . _String >>= \secKey ->
-             body ^? key "response" . key "ts" . _Integer >>= \ts -> Either  err 
-                                                                      Right  (encodeUtf8 secKey, encodeUtf8 (T.pack(show ts)))
-         
-         case body ^? key "error" . key "error_msg" . _String of
-             Just error -> Error $ "authorisation error " <>  T.unpack error <> " app will be stopped"
-             Nothing ->  
-               case extractSecKey body of
-                 Nothing  ->  Error  " unknown error, bot stop"
-                 Just (sk, ts) -> Auth (sk,ts)
+      maybeToEither (body ^? AL.key "error" . AL.key "error_msg" . AL._String) ( decodeStrict body :: Maybe Message )
+    {--
+    
  
     | m == GetMessage = 
         case body ^? key "failed" . _Integer of
@@ -147,27 +143,30 @@ prependRequest m body
                     Nothing ->  Error  " invalid json! bot stop"
        --}       
    | m == SendMessage =
-      let f x = Right x in  
-      body ^? key "error" . key "error_msg" . _String   >>= \err  ->
-      body ^? key "response"  . _String >>= \resp ->( either Just (const Nothing) err   >> Right resp >>= f :: Either Text BS8.ByteString)
       
+      --body ^? key "error" . key "error_msg" . _String   >>= \err ->  
+      --body ^? key "response"  . _String >>= \resp -> maybeToEither  (Just err) (Just resp)
+      maybeToEither (body ^? AL.key "error" . AL.key "error_msg" . AL._String) ( decodeStrict body :: Maybe Message )
       {--
       case body ^? key "error" . key "error_msg" . _String of
            Just error -> Error $   T.unpack error 
            Nothing -> 
             case body ^? key "response"  . _String of
              Just -> 
---}
-extractSecKey :: AsValue s => s -> Maybe (BS8.ByteString, BS8.ByteString)
+
+extractSecKey :: AL.AsValue s => s -> Maybe (BS8.ByteString, BS8.ByteString)
 extractSecKey body =
   body ^? key "response" . key "key" . _String >>= \secKey ->
   body ^? key "response" . key "ts" . _Integer >>= \ts -> Just (encodeUtf8 secKey, encodeUtf8 (T.pack(show ts)))
 
-extractMessage :: AsValue s => s -> Maybe (Integer, Text)
+extractMessage :: AL.AsValue s => s -> Maybe (Integer, Text)
 extractMessage body =
   body ^? key "updates" . key "object" . key "from_id" . _Integer >>= \from_id ->
   body ^? key "updates" . key "object" . key "text" . _String >>= \msg -> Just (from_id, msg)
-
+--}
+maybeToEither :: Maybe a -> Maybe b -> Either a b
+maybeToEither (Just a) _ = Left a
+maybeToEither _ (Just b)  = Right  b
 
 {--
 sendMessage secKey ts msg = do

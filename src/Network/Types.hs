@@ -27,8 +27,7 @@ data Url= Url
    requestQS :: Query 
  } 
 
-data ResponseMessage
-  = NoResponse | Message BS8.ByteString | Error String | Auth (BS8.ByteString, BS8.ByteString) | MessageVk MessageVK
+
 
 
 data Button = DataButton
@@ -36,13 +35,21 @@ data Button = DataButton
 
  }
  deriving (Generic, FromJSON, Show)
-
-
-data MessageVK = MessageVK
- { ts :: String,
+--newtype TS = TS {ts :: Value} 
+ 
+ 
+data Message = MessageVK
+ { ts :: String ,
    updates :: [MessageUpdates]
- }
- deriving (Generic, FromJSON, Show)
+ } | Response { response :: Text }
+   | Access 
+      { key :: String,
+        server :: String,
+        ts :: String
+      } 
+   | NoMessage   
+ deriving (Generic, FromJSON,  Show)
+ 
   
 data MessageUpdates = MessageUpdates
   { _type :: String,

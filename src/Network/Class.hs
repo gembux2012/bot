@@ -6,13 +6,14 @@ module Network.Class
 where
 
 import Network.Types
+import Network.ErrorTypes
 import Data.Has (Has, getter)
 import Control.Monad.Reader (ReaderT, asks, lift)
 
 class Monad m => GetMessageVK m where
- request  :: Method -> Url ->  m ResponseMessage
+ request  :: Method -> Url ->  m (Either ErrorVK Message)
  
-newtype DoRequest m = DoRequest  {doRequest :: Method -> Url ->  m ResponseMessage}
+newtype DoRequest m = DoRequest  {doRequest :: Method -> Url ->  m (Either ErrorVK Message)}
 
 instance
   ( Has (DoRequest m) r,

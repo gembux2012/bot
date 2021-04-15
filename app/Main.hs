@@ -33,6 +33,7 @@ import Network.Types
 import Network.Api
 import Data.Text.Encoding (encodeUtf8)
 import Data.Map (Map)
+import Network.ErrorTypes (ErrorVK)
 
 
 data LogCommand = MessageL Text | Stop (MVar ())
@@ -73,9 +74,17 @@ logger' conf m  = loop
 api :: 
    Log m 
    => GetMessageVK m
-   => m ResponseMessage
-api  = botStart GetKeyAccess getKeyAccessUrl "" ""   
-
+   => m (Either ErrorVK Message)
+api  = botStart GetKeyAccess getKeyAccessUrl 
+  
+botStart m url = do
+ result <- request m url
+ case result of
+  Left err -> logI.pack.show $ err 
+  Right msg -> logI.pack.show $ show msg
+ pure $ Right NoMessage
+ 
+{--
 botStart m url key ts = do
  --let access' = ("","")
  if m == GetKeyAccess then  
@@ -99,7 +108,7 @@ botStart m url key ts = do
       botStart SendMessage (sendMessageUrl  (BS8.pack.show.from_id._object $ head updates) 
        (BS8.pack.text._object $ head updates)) key (encodeUtf8 $ pack ts) 
       botStart GetMessage (getMessageUrl key (encodeUtf8 $ pack ts)) key (encodeUtf8 $ pack ts)
- 
+ --}
 dispatcherAnswer MessageVK{..} = 
  case text._object $ head updates  of -- /= "/" = botStart SendMessage   
    _ -> SendMessage 

@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 88a6798d082730ae0dfe010418ee65eb2c7be0694f349d962edc46c4062e0da9
+-- hash: 5a92b6d02c890bab3e61a05f90fbd099235d5c3e68679a78b6f4eb79631521aa
 
 name:           bot
 version:        0.1.0.0
@@ -34,6 +34,7 @@ library
       Logger.Tmp
       Network.Api
       Network.Class
+      Network.ErrorTypes
       Network.Types
   other-modules:
       Paths_bot
@@ -46,6 +47,7 @@ library
     , containers
     , data-has
     , directory
+    , either
     , exceptions
     , filepath
     , http-conduit
@@ -74,6 +76,7 @@ executable bot-exe
     , containers
     , data-has
     , directory
+    , either
     , exceptions
     , filepath
     , http-conduit
@@ -103,6 +106,7 @@ test-suite bot-test
     , containers
     , data-has
     , directory
+    , either
     , exceptions
     , filepath
     , http-conduit
