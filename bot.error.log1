@@ -1,6 +1,3 @@
-04-08-2021 17:11:04 +07 INFO request an access key
-04-08-2021 17:11:05 +07 INFO  access key received
-04-08-2021 17:11:05 +07 INFO waiting message
-04-08-2021 17:14:26 +07 INFO request an access key
-04-08-2021 17:14:26 +07 INFO  access key received
-04-08-2021 17:14:26 +07 INFO waiting message
+04-16-2021 09:55:08 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "Invalid json"}}
+04-16-2021 09:59:04 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "Invalid json"}}
+04-16-2021 10:48:03 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "{\"response\":{\"key\":\"67b7daeaae5f7c1f26ecb1a84978e3f359c9e392\",\"server\":\"https:\\/\\/lp.vk.com\\/wh202652768\",\"ts\":71}}"}}

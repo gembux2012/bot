@@ -52,6 +52,7 @@ import Network.Types
 import Network.ErrorTypes
 import Data.Maybe 
 import Network.ErrorTypes (ErrorVK)
+import Network.Types 
 
 --import Network.Types (MessageVK)
 
@@ -103,7 +104,7 @@ requestVK ::
  MonadIO m => 
  Monad m => 
  Applicative m => 
--- IsString ErrorVK =>
+ --Log m =>
  Method -> Url -> m (Either ErrorVK Message) 
 requestVK method Url{..} = do
   let request
@@ -119,15 +120,23 @@ requestVK method Url{..} = do
   --logI $ T.pack url
   let status = getResponseStatusCode response
   case status of
-    200 -> pure $ maybeToEither (decodeStrict.getResponseBody $ response :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
-                                (decodeStrict.getResponseBody $ response :: Maybe Message)
+    200 -> do 
+     --let body = getResponseBody response 
+     -- logI $ T.pack.BS8.unpack $ getResponseBody  response
+     pure $ maybeToEither (decodeStrict.getResponseBody $ response :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
+                         (decodeStrict.getResponseBody $ response :: Maybe Message)
+                       (BS8.unpack $ getResponseBody  response)
+    -- pure $ prependRequest method (getResponseBody response)                    
     _ -> pure.Left $ ErrorVK{ error = Err {error_msg = "request return status ", error_code = status}}   -- $ T.pack ("method " <> show request <> " status " <> show status <> " app will be stopped")
           
-
-prependRequest :: Method -> BS8.ByteString ->  Either Text Message  
+{---
+prependRequest :: Method -> BS8.ByteString ->  Either ErrorVK   
 prependRequest m body 
-    | m == GetKeyAccess = 
-      maybeToEither (body ^? AL.key "error" . AL.key "error_msg" . AL._String) ( decodeStrict body :: Maybe Message )
+    | m == GetKeyAccess = maybeToEither (body :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
+                                        (body :: Maybe Message)
+                                        (BS8.unpack  body)
+
+      -- maybeToEither (body ^? AL.key "error" . AL.key "error_msg" . AL._String) ( decodeStrict body :: Maybe Message )
     {--
     
  
@@ -145,11 +154,11 @@ prependRequest m body
                     Just mess  ->  MessageVk mess 
                     Nothing ->  Error  " invalid json! bot stop"
        --}       
-   | m == SendMessage =
+   
       
       --body ^? key "error" . key "error_msg" . _String   >>= \err ->  
       --body ^? key "response"  . _String >>= \resp -> maybeToEither  (Just err) (Just resp)
-      maybeToEither (body ^? AL.key "error" . AL.key "error_msg" . AL._String) ( decodeStrict body :: Maybe Message )
+       --maybeToEither (body ^? AL.key "error" . AL.key "error_msg" . AL._String) ( decodeStrict body :: Maybe Message )
       {--
       case body ^? key "error" . key "error_msg" . _String of
            Just error -> Error $   T.unpack error 
@@ -167,10 +176,11 @@ extractMessage body =
   body ^? key "updates" . key "object" . key "from_id" . _Integer >>= \from_id ->
   body ^? key "updates" . key "object" . key "text" . _String >>= \msg -> Just (from_id, msg)
 --}
-maybeToEither :: IsString a => IsString b => Maybe a -> Maybe b -> Either a b
-maybeToEither (Just a) _ = Left a
-maybeToEither _ (Just b)  = Right  b
-maybeToEither Nothing Nothing = Left  "Invalid json"
+--}
+maybeToEither :: Maybe ErrorVK -> Maybe Message -> String -> Either ErrorVK Message
+maybeToEither (Just err) _ _= Left err
+maybeToEither _ (Just mess) _  = Right  mess
+maybeToEither Nothing Nothing  tx = Left $ ErrorVK{ error = Err {error_msg = tx, error_code = 0}} 
 {--
 sendMessage secKey ts msg = do
  body <- requestVK' url

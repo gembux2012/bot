@@ -1,2 +1,1 @@
-04-08-2021 17:14:43 +07 INFO message received: "ghbdtn"from: 454751226
-04-08-2021 17:14:43 +07 INFO waiting message
+04-16-2021 11:31:13 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "{\"response\":{\"key\":\"0c20a9b74e52816673b36568d253ae590e9d3169\",\"server\":\"https:\\/\\/lp.vk.com\\/wh202652768\",\"ts\":71}}"}}

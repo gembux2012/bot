@@ -1,5 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Network.Types
  
@@ -38,18 +40,40 @@ data Button = DataButton
 --newtype TS = TS {ts :: Value} 
  
  
-data Message = Message
+data Message = Message'
  { ts :: String ,
    updates :: [MessageUpdates]
- } | Response { response :: Text }
+ } | Response{ response :: Integer }
    | Access 
-      { key :: String,
-        server :: String,
-        ts :: String
-      } 
-   | NoMessage   
- deriving (Generic, FromJSON,  Show)
+      {response' :: String,  
+       key :: String,
+       server :: String,
+       ts' :: Int
+   }
+-- data Response = Response{ response :: Integer }
+
+
+--} 
+instance FromJSON Message where
+  parseJSON = withObject "message or response or access" $ \o -> do
+    kind <- o .: "kind"
+    case kind of
+     "message" -> Message' <$> o .: "ts" <*> o .: "updates"
+     "response" -> Response <$> o .: "response"
+     "access" -> Access <$> o .: "response" <*> (o .: "response") .: "key" <*> (o .: "response") .: "server" <*> (o .: "response") .: "ts"
+     {-- 
+      do 
+       response' <- o .: "response"
+       key     <- response' .: "key"
+       server  <- response' .: "server"
+       ts'     <- response' .: "ts"
+       return Access{..}
+--}
  
+ 
+
+
+  
   
 data MessageUpdates = MessageUpdates
   { _type :: String,
