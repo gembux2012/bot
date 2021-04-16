@@ -109,7 +109,7 @@ botStart m url key ts = do
        (BS8.pack.text._object $ head updates)) key (encodeUtf8 $ pack ts) 
       botStart GetMessage (getMessageUrl key (encodeUtf8 $ pack ts)) key (encodeUtf8 $ pack ts)
  --}
-dispatcherAnswer MessageVK{..} = 
+dispatcherAnswer Message{..} = 
  case text._object $ head updates  of -- /= "/" = botStart SendMessage   
    _ -> SendMessage 
  

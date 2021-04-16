@@ -38,7 +38,7 @@ data Button = DataButton
 --newtype TS = TS {ts :: Value} 
  
  
-data Message = MessageVK
+data Message = Message
  { ts :: String ,
    updates :: [MessageUpdates]
  } | Response { response :: Text }

@@ -13,7 +13,7 @@ import Control.Monad.Reader (ReaderT, asks, lift)
 class Monad m => GetMessageVK m where
  request  :: Method -> Url ->  m (Either ErrorVK Message)
  
-newtype DoRequest m = DoRequest  {doRequest :: Method -> Url ->  m (Either ErrorVK Message)}
+newtype DoRequest m = DoRequest  {doRequest ::  Method -> Url ->  m (Either ErrorVK Message)}
 
 instance
   ( Has (DoRequest m) r,

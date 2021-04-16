@@ -12,6 +12,7 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE Strict #-}
+{-# LANGUAGE Strict #-}
 
 module Network.Api
   
@@ -45,6 +46,7 @@ import Network.HTTP.Simple
 import Data.Aeson.Types (Parser, parseMaybe, FromJSON, Value, withObject, (.:), fieldLabelModifier, genericParseJSON, defaultOptions)
 import Data.Aeson (decodeStrict,parseJSON)
 import Data.Either 
+import Data.String
 --import Control.Monad.Error
 import Network.Types 
 import Network.ErrorTypes
@@ -101,6 +103,7 @@ requestVK ::
  MonadIO m => 
  Monad m => 
  Applicative m => 
+-- IsString ErrorVK =>
  Method -> Url -> m (Either ErrorVK Message) 
 requestVK method Url{..} = do
   let request
@@ -164,10 +167,10 @@ extractMessage body =
   body ^? key "updates" . key "object" . key "from_id" . _Integer >>= \from_id ->
   body ^? key "updates" . key "object" . key "text" . _String >>= \msg -> Just (from_id, msg)
 --}
-maybeToEither :: Maybe a -> Maybe b -> Either a b
+maybeToEither :: IsString a => IsString b => Maybe a -> Maybe b -> Either a b
 maybeToEither (Just a) _ = Left a
 maybeToEither _ (Just b)  = Right  b
-
+maybeToEither Nothing Nothing = Left  "Invalid json"
 {--
 sendMessage secKey ts msg = do
  body <- requestVK' url

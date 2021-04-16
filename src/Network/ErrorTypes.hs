@@ -6,6 +6,7 @@ module Network.ErrorTypes where
 
 import GHC.Generics
 import Data.Aeson.Types (FromJSON)
+import Data.String
 
 
 data Err= Err 
@@ -19,6 +20,6 @@ data Err= Err
 
 newtype ErrorVK
   = ErrorVK {error :: Err}
-  deriving (Generic, FromJSON, Show) 
+  deriving (Generic, FromJSON, Show ) 
  
 
