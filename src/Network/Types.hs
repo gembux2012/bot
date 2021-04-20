@@ -10,6 +10,7 @@ where
 import GHC.Generics
 import qualified Data.ByteString.Char8 as BS8
 import Data.Aeson
+import Data.Foldable
 
 
 import Data.Aeson.Types (FromJSON)
@@ -37,41 +38,29 @@ data Button = DataButton
 
  }
  deriving (Generic, FromJSON, Show)
---newtype TS = TS {ts :: Value} 
- 
  
 data Message = Message'
- { ts :: String ,
+ { ts' :: String ,
    updates :: [MessageUpdates]
  } | Response{ response :: Integer }
-   | Access 
-      {response' :: String,  
-       key :: String,
-       server :: String,
-       ts' :: Int
+   | Access {response' :: Access'}
+   | NoMessage
+  deriving (Generic, Show) 
+
+data Access' = Access'     
+  {   
+   key :: String,
+   server :: String,
+   ts :: Int
    }
--- data Response = Response{ response :: Integer }
+   deriving (Generic, FromJSON, Show) 
 
-
---} 
 instance FromJSON Message where
-  parseJSON = withObject "message or response or access" $ \o -> do
-    kind <- o .: "kind"
-    case kind of
-     "message" -> Message' <$> o .: "ts" <*> o .: "updates"
-     "response" -> Response <$> o .: "response"
-     "access" -> Access <$> o .: "response" <*> (o .: "response") .: "key" <*> (o .: "response") .: "server" <*> (o .: "response") .: "ts"
-     {-- 
-      do 
-       response' <- o .: "response"
-       key     <- response' .: "key"
-       server  <- response' .: "server"
-       ts'     <- response' .: "ts"
-       return Access{..}
---}
- 
- 
-
+  parseJSON = withObject "message or  access" $ \o ->  asum [
+        Message' <$> o .: "ts" <*> o .: "updates",
+        Response <$> o .: "response",
+        Access <$> o .: "response" ]
+    
 
   
   

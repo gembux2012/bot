@@ -1,1 +1,1 @@
-04-16-2021 11:31:13 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "{\"response\":{\"key\":\"0c20a9b74e52816673b36568d253ae590e9d3169\",\"server\":\"https:\\/\\/lp.vk.com\\/wh202652768\",\"ts\":71}}"}}
+04-17-2021 15:04:49 +07 INFO "Access' {key = \"46da8896711d0625112f3dfbef7c6868f0a3e1e8\", server = \"https://lp.vk.com/wh202652768\", ts = 71}"

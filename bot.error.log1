@@ -1,3 +1,2 @@
-04-16-2021 09:55:08 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "Invalid json"}}
-04-16-2021 09:59:04 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "Invalid json"}}
-04-16-2021 10:48:03 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "{\"response\":{\"key\":\"67b7daeaae5f7c1f26ecb1a84978e3f359c9e392\",\"server\":\"https:\\/\\/lp.vk.com\\/wh202652768\",\"ts\":71}}"}}
+04-17-2021 07:35:02 +07 INFO "Access {response' = Access' {key = \"7decaf4509f3e6fe647383b295aeaa6ea2b95000\", server = \"https://lp.vk.com/wh202652768\", ts = 71}}"
+04-17-2021 07:35:59 +07 INFO "Access {response' = Access' {key = \"a2ca1d2f2b7fff3eb32a0c884ece5a9bbd7545d9\", server = \"https://lp.vk.com/wh202652768\", ts = 71}}"

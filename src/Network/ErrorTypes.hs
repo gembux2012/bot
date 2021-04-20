@@ -15,7 +15,7 @@ data Err= Err
  } | GetKeyTsErr 
  { failed :: Int,
    ts :: Maybe Int
- }
+ } 
  deriving (Generic, FromJSON,  Show)
 
 newtype ErrorVK

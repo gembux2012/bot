@@ -33,7 +33,8 @@ import Network.Types
 import Network.Api
 import Data.Text.Encoding (encodeUtf8)
 import Data.Map (Map)
-import Network.ErrorTypes (ErrorVK)
+import Network.ErrorTypes 
+import Network.Types (Message)
 
 
 data LogCommand = MessageL Text | Stop (MVar ())
@@ -78,12 +79,16 @@ api ::
 api  = botStart GetKeyAccess getKeyAccessUrl 
   
 botStart m url = do
- result <- request m url
+ Right (Access rsp)  <- request m url
+ let access =rsp
+ botStart SendMessage (getMessageUrl (BS8.pack(key access)) (BS8.pack(ts rsp)))
+ {--
  case result of
   Left err -> logI.pack.show $ err 
-  Right msg -> logI.pack.show $ show msg
+  Right Access{..}  -> url = response'
+  Right Message'{..} -> logI.pack.show $ show updates
  pure $ Right NoMessage
- 
+ --}
 {--
 botStart m url key ts = do
  --let access' = ("","")
@@ -108,12 +113,12 @@ botStart m url key ts = do
       botStart SendMessage (sendMessageUrl  (BS8.pack.show.from_id._object $ head updates) 
        (BS8.pack.text._object $ head updates)) key (encodeUtf8 $ pack ts) 
       botStart GetMessage (getMessageUrl key (encodeUtf8 $ pack ts)) key (encodeUtf8 $ pack ts)
- --}
+ 
 dispatcherAnswer Message{..} = 
  case text._object $ head updates  of -- /= "/" = botStart SendMessage   
    _ -> SendMessage 
  
- 
+ --}
 data  Application m   = Application 
   {logger :: Logger m ,
    dorequest :: DoRequest m 
