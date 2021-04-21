@@ -12,9 +12,6 @@ import Data.String
 data Err= Err 
  { error_code :: Int,
    error_msg :: String 
- } | GetKeyTsErr 
- { failed :: Int,
-   ts :: Maybe Int
  } 
  deriving (Generic, FromJSON,  Show)
 

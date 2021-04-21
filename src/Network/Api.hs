@@ -62,7 +62,7 @@ import Network.Types
 
 --https://api.vk.com/method/groups.getLongPollServer?access_token=&group_id=202652768&v=5.130
 -- send https://api.vk.com/method/messages.send?user_id=454751226&message=&title=gh&access_token=v=5.50
-https://vk.com/dev/messages.send?params[user_id]=454751226&params[random_id]=0&params[message]=Test%20message&params[dont_parse_links]=0&params[disable_mentions]=0&params[intent]=default&params[v]=5.130
+--https://vk.com/dev/messages.send?params[user_id]=454751226&params[random_id]=0&params[message]=Test%20message&params[dont_parse_links]=0&params[disable_mentions]=0&params[intent]=default&params[v]=5.130
 -- outh https://api.vk.com/method/groups.getLongPollServer?access_token=57f5906e918c8dc83168e8d92770dde7610f53d0b143eb2030bc2f116532e07a463d0cdd82db544fc3efb&group_id=202652768&v=5.50
 -- receive https://lp.vk.com/wh202652768?act=a_check&key=f01f9b9c85df0878d0e181a28ee14b3909f06099&ts=10&wait=25
 idGroup = "202652768" :: BS8.ByteString

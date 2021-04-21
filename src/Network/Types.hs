@@ -16,6 +16,7 @@ import Data.Foldable
 import Data.Aeson.Types (FromJSON)
 import Data.Text.Internal.Lazy (Text)
 import Network.HTTP.Simple (Query)
+import Control.Monad.Cont (when)
 
 
 --data ResponseMessage' = Message' BS8.ByteString | Stop
@@ -44,8 +45,12 @@ data Message = Message'
    updates :: [MessageUpdates]
  } | Response{ response :: Integer }
    | Access {response' :: Access'}
+   | Failed {failed :: Int,
+             ts'' ::  Int
+             }
    | NoMessage
   deriving (Generic, Show) 
+
 
 data Access' = Access'     
   {   
@@ -53,16 +58,21 @@ data Access' = Access'
    server :: String,
    ts :: Int
    }
-   deriving (Generic, FromJSON, Show) 
+   deriving ( Show) 
 
 instance FromJSON Message where
-  parseJSON = withObject "message or  access" $ \o ->  asum [
+  parseJSON = withObject "message or access or filed" $ \o ->  asum [
         Message' <$> o .: "ts" <*> o .: "updates",
         Response <$> o .: "response",
-        Access <$> o .: "response" ]
-    
+        o .: "failed" >>= \ofail -> 
+         when (ofail == 1)  Failed <$> o .: "failed" <*> o .: "ts"
+         Failed  <$> o .: "failed" <*> null Int 
+         ]
+instance FromJSON Access' where
+  parseJSON = withObject " access " $ \o ->          
+   o .: "response" >>= \orsp -> Access' <$> orsp .: "key" <*> "server" <*> "ts" 
+ 
 
-  
   
 data MessageUpdates = MessageUpdates
   { _type :: String,
