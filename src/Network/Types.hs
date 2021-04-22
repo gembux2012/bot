@@ -44,14 +44,13 @@ data Message = Message'
  { ts' :: String ,
    updates :: [MessageUpdates]
  } | Response{ response :: Integer }
-   | Access {response' :: Access'}
-   | Failed {failed :: Int,
-             ts'' ::  Int
-             }
+   | Access {response' :: Access'}  
+   | Failed {failed :: Failed'}
+             
    | NoMessage
-  deriving (Generic, Show) 
+  deriving ( Show) 
 
-
+ 
 data Access' = Access'     
   {   
    key :: String,
@@ -60,17 +59,41 @@ data Access' = Access'
    }
    deriving ( Show) 
 
+data Failed' = Failed'
+ {failed' :: Int,
+  ts'' :: Maybe Int
+  }  
+ deriving ( Show)
+ 
+ 
+instance FromJSON Failed' where
+  parseJSON = withObject " failed " $ \o -> do
+    failed' <- o .: "failed"
+    ts'' <-   o .:? "ts"
+    return Failed' {..}
+              
+
+instance FromJSON Access' where
+  parseJSON = withObject " access " $ \o -> do
+   resp <- o .: "response"
+   key <- resp .: "key"
+   server <- resp .: "server"
+   ts <- resp .: "ts"
+   return Access'{..} 
+ 
 instance FromJSON Message where
-  parseJSON = withObject "message or access or filed" $ \o ->  asum [
+  parseJSON = withObject "message or response or access or filed" $ \o ->  asum [
         Message' <$> o .: "ts" <*> o .: "updates",
         Response <$> o .: "response",
-        o .: "failed" >>= \ofail -> 
-         when (ofail == 1)  Failed <$> o .: "failed" <*> o .: "ts"
-         Failed  <$> o .: "failed" <*> null Int 
+        Access   <$> o .: "response",
+        Failed  <$> o .: "failed"  
          ]
-instance FromJSON Access' where
-  parseJSON = withObject " access " $ \o ->          
-   o .: "response" >>= \orsp -> Access' <$> orsp .: "key" <*> "server" <*> "ts" 
+         
+                       
+
+
+             
+   -- o .: "response" >>= \orsp -> Access' <$> orsp .: "key" <*> "server" <*> "ts" 
  
 
   

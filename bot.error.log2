@@ -1,2 +1,7 @@
-04-17-2021 07:19:51 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "{\"response\":{\"key\":\"3fc3f27a4818a5044075bed810e1265825ae2c07\",\"server\":\"https:\\/\\/lp.vk.com\\/wh202652768\",\"ts\":71}}"}}
-04-17-2021 07:22:45 +07 INFO ErrorVK {error = Err {error_code = 0, error_msg = "{\"response\":{\"key\":\"d99b0941b661a1453bdacd589bc646962281bb2c\",\"server\":\"https:\\/\\/lp.vk.com\\/wh202652768\",\"ts\":71}}"}}
+04-22-2021 11:43:30 +07 INFO bot start
+04-22-2021 11:43:30 +07 INFO request access
+04-22-2021 11:49:29 +07 INFO bot start
+04-22-2021 11:49:29 +07 INFO request access
+04-22-2021 14:26:47 +07 INFO bot start
+04-22-2021 14:26:47 +07 INFO request access
+04-22-2021 14:28:40 +07 INFO bot start

@@ -13,6 +13,7 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE Strict #-}
+{-# LANGUAGE Strict #-}
 
 module Network.Api
   
@@ -44,7 +45,7 @@ import Logger.Class (Log (..))
 import Network.HTTP.Conduit (http)
 import Network.HTTP.Simple
 import Data.Aeson.Types (Parser, parseMaybe, FromJSON, Value, withObject, (.:), fieldLabelModifier, genericParseJSON, defaultOptions)
-import Data.Aeson (decodeStrict,parseJSON)
+import Data.Aeson (decodeStrict,parseJSON, eitherDecodeStrict)
 import Data.Either 
 import Data.String
 --import Control.Monad.Error
@@ -86,10 +87,8 @@ getKeyAccessUrl  = Url
   requestQS = [("access_token", Just keyGroup),("group_id", Just idGroup),("v", Just versionService)]
  }
 
-getMessageUrl k ts = Url
- {requestHost = "lp.vk.com",
-   requestMethod = "GET",
-   requestPath = "wh" <> idGroup ,
+getMessageUrl k server ts = Url
+ { requestPath = "server" ,
    requestQS = [("act", Just "a_check" ),("key", Just k),("ts", Just ts),("wait", Just "25")]
   } 
  
@@ -107,8 +106,8 @@ requestVK ::
  Monad m => 
  Applicative m => 
  --Log m =>
- Method -> Url -> m (Either ErrorVK Message) 
-requestVK method Url{..} = do
+  Url -> m (Either ErrorVK Message) 
+requestVK  Url{..} = do
   let request
         = setRequestHost requestHost  
         $ setRequestMethod requestMethod
@@ -124,10 +123,10 @@ requestVK method Url{..} = do
   case status of
     200 -> do 
      --let body = getResponseBody response 
-     -- logI $ T.pack.BS8.unpack $ getResponseBody  response
+     logI $ BS8.pack.BS8.unpack (eitherDecodeStrict.getResponseBody $ response :: Either String Message )
      pure $ maybeToEither (decodeStrict.getResponseBody $ response :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
                          (decodeStrict.getResponseBody $ response :: Maybe Message)
-                       (BS8.unpack $ getResponseBody  response)
+                         (BS8.unpack $ getResponseBody  response)
     -- pure $ prependRequest method (getResponseBody response)                    
     _ -> pure.Left $ ErrorVK{ error = Err {error_msg = "request return status ", error_code = status}}   -- $ T.pack ("method " <> show request <> " status " <> show status <> " app will be stopped")
           

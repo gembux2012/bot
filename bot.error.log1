@@ -1,2 +1,4 @@
-04-17-2021 07:35:02 +07 INFO "Access {response' = Access' {key = \"7decaf4509f3e6fe647383b295aeaa6ea2b95000\", server = \"https://lp.vk.com/wh202652768\", ts = 71}}"
-04-17-2021 07:35:59 +07 INFO "Access {response' = Access' {key = \"a2ca1d2f2b7fff3eb32a0c884ece5a9bbd7545d9\", server = \"https://lp.vk.com/wh202652768\", ts = 71}}"
+04-22-2021 14:28:40 +07 INFO request access
+04-22-2021 14:33:45 +07 INFO bot start
+04-22-2021 14:33:45 +07 INFO request access
+04-22-2021 14:33:46 +07 INFO Left (ErrorVK {error = Err {error_code = 0, error_msg = "{\"response\":{\"key\":\"bb9dfdf860c7615807b5413b28fad27077d2e4cc\",\"server\":\"https:\\/\\/lp.vk.com\\/wh202652768\",\"ts\":73}}"}})

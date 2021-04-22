@@ -35,6 +35,7 @@ import Data.Text.Encoding (encodeUtf8)
 import Data.Map (Map)
 import Network.ErrorTypes 
 import Network.Types (Message)
+import Network.Types (Message)
 
 
 data LogCommand = MessageL Text | Stop (MVar ())
@@ -47,8 +48,8 @@ main = do
   let config = snd conf
   putStrLn  $ fst conf
   let app = Application
-            { logger = Logger {dologLn  = putMVar m . MessageL },                
-              dorequest =DoRequest { doRequest = requestVK }
+            { logger = Logger {dologLn  = putMVar m . MessageL }                
+              -- dorequest =DoRequest { doRequest = requestVK }
             }
   forkIO $ logger' config m
   
@@ -74,14 +75,36 @@ logger' conf m  = loop
 
 api :: 
    Log m 
-   => GetMessageVK m
+   => MonadIO m
+   => MonadFail m
    => m (Either ErrorVK Message)
-api  = botStart GetKeyAccess getKeyAccessUrl 
-  
-botStart m url = do
- Right (Access rsp)  <- request m url
- let access =rsp
- botStart SendMessage (getMessageUrl (BS8.pack(key access)) (BS8.pack(ts rsp)))
+api  = botStart  getKeyAccessUrl 
+botStart  url = do
+ logI "bot start"
+ logI "request access"
+ result <- requestVK  url
+ --logI $ pack.show $ (result)
+ Right (Access Access'{..})   <- requestVK  url
+ 
+ --let access = Access'{key =key, server=server, ts = ts}  
+ logI "accessed"
+ logI "awaiting message"
+ botStart $ getMessageUrl (BS8.pack $ key  ) (BS8.pack $ server ) (BS8.pack.show $ ts  )
+ 
+ Right (Failed Failed'{..})   <- requestVK  url
+ case failed' of
+    1 -> botStart $ getMessageUrl  (BS8.pack $ key ) (BS8.pack $ server ) (BS8.pack.show $  ts'' )
+    2 -> botStart  getKeyAccessUrl 
+    3 -> botStart  getKeyAccessUrl
+   
+ Right (Message' _ msg) <- requestVK  url
+ logI $ pack.text._object $ head msg    
+ logI "awaiting message"
+ botStart $ getMessageUrl (BS8.pack $ key  ) (BS8.pack $ server  ) (BS8.pack.show $ ts  )
+ 
+ Left (ErrorVK err) <- requestVK  url
+ logI $ pack.show $ err
+ pure $ Right NoMessage
  {--
  case result of
   Left err -> logI.pack.show $ err 
@@ -120,8 +143,8 @@ dispatcherAnswer Message{..} =
  
  --}
 data  Application m   = Application 
-  {logger :: Logger m ,
-   dorequest :: DoRequest m 
+  {logger :: Logger m 
+   -- dorequest :: DoRequest m 
   }
   deriving stock Generic
 
@@ -129,6 +152,6 @@ instance Has (Logger m) (Application m) where
   getter = logger
   modifier f a = a {logger = f . logger $ a}
 
-instance Has (DoRequest m) (Application m) where
-  getter = dorequest
-  modifier f a = a {dorequest = f . dorequest $ a}
+-- instance Has (DoRequest m) (Application m) where
+ -- getter = dorequest
+ -- modifier f a = a {dorequest = f . dorequest $ a}
