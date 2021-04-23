@@ -1,7 +1,4 @@
-04-22-2021 11:43:30 +07 INFO bot start
-04-22-2021 11:43:30 +07 INFO request access
-04-22-2021 11:49:29 +07 INFO bot start
-04-22-2021 11:49:29 +07 INFO request access
-04-22-2021 14:26:47 +07 INFO bot start
-04-22-2021 14:26:47 +07 INFO request access
-04-22-2021 14:28:40 +07 INFO bot start
+04-22-2021 14:28:40 +07 INFO request access
+04-22-2021 14:33:45 +07 INFO bot start
+04-22-2021 14:33:45 +07 INFO request access
+04-22-2021 14:33:46 +07 INFO Left (ErrorVK {error = Err {error_code = 0, error_msg = "{\"response\":{\"key\":\"bb9dfdf860c7615807b5413b28fad27077d2e4cc\",\"server\":\"https:\\/\\/lp.vk.com\\/wh202652768\",\"ts\":73}}"}})

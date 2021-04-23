@@ -105,7 +105,7 @@ requestVK ::
  MonadIO m => 
  Monad m => 
  Applicative m => 
- --Log m =>
+ Log m =>
   Url -> m (Either ErrorVK Message) 
 requestVK  Url{..} = do
   let request
@@ -122,8 +122,10 @@ requestVK  Url{..} = do
   let status = getResponseStatusCode response
   case status of
     200 -> do 
-     --let body = getResponseBody response 
-     logI $ BS8.pack.BS8.unpack (eitherDecodeStrict.getResponseBody $ response :: Either String Message )
+     let body = getResponseBody response 
+     let str = (eitherDecodeStrict.getResponseBody $ response :: Either String Message )
+     case str of
+      Left s -> logI $ T.pack  s  
      pure $ maybeToEither (decodeStrict.getResponseBody $ response :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
                          (decodeStrict.getResponseBody $ response :: Maybe Message)
                          (BS8.unpack $ getResponseBody  response)

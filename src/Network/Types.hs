@@ -14,9 +14,12 @@ import Data.Foldable
 
 
 import Data.Aeson.Types (FromJSON)
-import Data.Text.Internal.Lazy (Text)
+import qualified Data.Text as T
 import Network.HTTP.Simple (Query)
 import Control.Monad.Cont (when)
+import qualified Data.Aeson.Lens as AL 
+import Control.Lens.Fold
+import Data.Text.Encoding (encodeUtf8)
 
 
 --data ResponseMessage' = Message' BS8.ByteString | Stop
@@ -50,12 +53,12 @@ data Message = Message'
    | NoMessage
   deriving ( Show) 
 
- 
+
 data Access' = Access'     
   {   
    key :: String,
    server :: String,
-   ts :: Int
+   ts :: String
    }
    deriving ( Show) 
 
@@ -65,7 +68,21 @@ data Failed' = Failed'
   }  
  deriving ( Show)
  
- 
+instance FromJSON Message where
+  parseJSON = withObject "message or response or access or filed" $ \o ->  asum [
+        Message' <$> o .: "ts" <*> o .: "updates",
+        Response <$> o .: "response",
+        --Access   <$>  o .:  "response" >>= \r -> (r .: "key"),
+        Just (getAccess o) -> \acc -> acc,
+        Failed  <$> o .: "failed"  
+         ]
+         
+getAccess  o =
+  o ^? AL.key "response" . AL.key "key" . AL._String >>= \secKey ->
+  o ^? AL.key "response" . AL.key "server" . AL._String >>= \server ->
+  o ^? AL.key "response" . AL.key "ts" . AL._Integer >>= \ts -> 
+  Just (Access'{ key = T.unpack secKey , server = T.unpack server, ts = T.unpack.show $ ts})                        
+
 instance FromJSON Failed' where
   parseJSON = withObject " failed " $ \o -> do
     failed' <- o .: "failed"
@@ -79,19 +96,7 @@ instance FromJSON Access' where
    key <- resp .: "key"
    server <- resp .: "server"
    ts <- resp .: "ts"
-   return Access'{..} 
- 
-instance FromJSON Message where
-  parseJSON = withObject "message or response or access or filed" $ \o ->  asum [
-        Message' <$> o .: "ts" <*> o .: "updates",
-        Response <$> o .: "response",
-        Access   <$> o .: "response",
-        Failed  <$> o .: "failed"  
-         ]
-         
-                       
-
-
+   return Access'{..}
              
    -- o .: "response" >>= \orsp -> Access' <$> orsp .: "key" <*> "server" <*> "ts" 
  

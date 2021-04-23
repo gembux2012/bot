@@ -48,7 +48,7 @@ main = do
   let config = snd conf
   putStrLn  $ fst conf
   let app = Application
-            { logger = Logger {dologLn  = putMVar m . MessageL }                
+            { logger = Logger {dologLn  = putMVar m . MessageL }
               -- dorequest =DoRequest { doRequest = requestVK }
             }
   forkIO $ logger' config m
@@ -78,30 +78,30 @@ api ::
    => MonadIO m
    => MonadFail m
    => m (Either ErrorVK Message)
-api  = botStart  getKeyAccessUrl 
+api  = botStart  getKeyAccessUrl
 botStart  url = do
  logI "bot start"
  logI "request access"
  result <- requestVK  url
  --logI $ pack.show $ (result)
  Right (Access Access'{..})   <- requestVK  url
- 
- --let access = Access'{key =key, server=server, ts = ts}  
+
+ --let access = Access'{key =key, server=server, ts = ts}
  logI "accessed"
  logI "awaiting message"
  botStart $ getMessageUrl (BS8.pack $ key  ) (BS8.pack $ server ) (BS8.pack.show $ ts  )
- 
+
  Right (Failed Failed'{..})   <- requestVK  url
  case failed' of
     1 -> botStart $ getMessageUrl  (BS8.pack $ key ) (BS8.pack $ server ) (BS8.pack.show $  ts'' )
-    2 -> botStart  getKeyAccessUrl 
+    2 -> botStart  getKeyAccessUrl
     3 -> botStart  getKeyAccessUrl
-   
+
  Right (Message' _ msg) <- requestVK  url
- logI $ pack.text._object $ head msg    
+ logI $ pack.text._object $ head msg
  logI "awaiting message"
  botStart $ getMessageUrl (BS8.pack $ key  ) (BS8.pack $ server  ) (BS8.pack.show $ ts  )
- 
+
  Left (ErrorVK err) <- requestVK  url
  logI $ pack.show $ err
  pure $ Right NoMessage
@@ -143,8 +143,8 @@ dispatcherAnswer Message{..} =
  
  --}
 data  Application m   = Application 
-  {logger :: Logger m 
-   -- dorequest :: DoRequest m 
+  {logger :: Logger m
+   -- dorequest :: DoRequest m
   }
   deriving stock Generic
 
