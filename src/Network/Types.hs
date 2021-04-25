@@ -47,7 +47,7 @@ data Message = Message'
  { ts' :: String ,
    updates :: [MessageUpdates]
  } | Response{ response :: Integer }
-   | Access {response' :: Access'}  
+   | Access  Access'  
    | Failed {failed :: Failed'}
              
    | NoMessage
@@ -58,7 +58,7 @@ data Access' = Access'
   {   
    key :: String,
    server :: String,
-   ts :: String
+   ts :: Int
    }
    deriving ( Show) 
 
@@ -72,16 +72,11 @@ instance FromJSON Message where
   parseJSON = withObject "message or response or access or filed" $ \o ->  asum [
         Message' <$> o .: "ts" <*> o .: "updates",
         Response <$> o .: "response",
-        --Access   <$>  o .:  "response" >>= \r -> (r .: "key"),
-        Just (getAccess o) -> \acc -> acc,
+        Access   <$>  o .:  "response" ,
         Failed  <$> o .: "failed"  
          ]
-         
-getAccess  o =
-  o ^? AL.key "response" . AL.key "key" . AL._String >>= \secKey ->
-  o ^? AL.key "response" . AL.key "server" . AL._String >>= \server ->
-  o ^? AL.key "response" . AL.key "ts" . AL._Integer >>= \ts -> 
-  Just (Access'{ key = T.unpack secKey , server = T.unpack server, ts = T.unpack.show $ ts})                        
+--}         
+                    
 
 instance FromJSON Failed' where
   parseJSON = withObject " failed " $ \o -> do
@@ -92,10 +87,10 @@ instance FromJSON Failed' where
 
 instance FromJSON Access' where
   parseJSON = withObject " access " $ \o -> do
-   resp <- o .: "response"
-   key <- resp .: "key"
-   server <- resp .: "server"
-   ts <- resp .: "ts"
+   -- resp <- o .: "response"
+   key <- o .: "key"
+   server <- o .: "server"
+   ts <-  o .: "ts"
    return Access'{..}
              
    -- o .: "response" >>= \orsp -> Access' <$> orsp .: "key" <*> "server" <*> "ts" 

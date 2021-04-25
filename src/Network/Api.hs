@@ -54,6 +54,9 @@ import Network.ErrorTypes
 import Data.Maybe 
 import Network.ErrorTypes (ErrorVK)
 import Network.Types 
+import Network.Types (Message (..))
+import Network.URI
+import Control.Monad (when)
 
 --import Network.Types (MessageVK)
 
@@ -87,19 +90,30 @@ getKeyAccessUrl  = Url
   requestQS = [("access_token", Just keyGroup),("group_id", Just idGroup),("v", Just versionService)]
  }
 
-getMessageUrl k server ts = Url
- { requestPath = "server" ,
+getMessageUrl :: BS8.ByteString -> String -> BS8.ByteString -> Url
+getMessageUrl k server  ts = Url
+ { requestHost = BS8.pack $ uriScheme  server     ,
+   requestMethod = "GET",
+   requestPath = BS8.pack $ uriPath  server ,
    requestQS = [("act", Just "a_check" ),("key", Just k),("ts", Just ts),("wait", Just "25")]
   } 
  
 sendMessageUrl  user_id message = Url
- {requestHost = "api.vk.com",
+ { requestHost = "api.vk.com",
    requestMethod = "GET",
    requestPath = "method/messages.send" ,
    requestQS = [("user_id", Just user_id ),("message", Just message),
                ("title", Just ""),("access_token", Just keyGroup),("v", Just versionService)]
   } 
 
+parseUri :: String -> String -> URI
+parseUri frag u  =  do 
+   ur <- parseURI u  
+   case ur of 
+    Just ur -> do
+     when (frag == "host ") return $ uriScheme ur 
+   
+   
 
 requestVK ::
  MonadIO m => 
@@ -123,9 +137,10 @@ requestVK  Url{..} = do
   case status of
     200 -> do 
      let body = getResponseBody response 
-     let str = (eitherDecodeStrict.getResponseBody $ response :: Either String Message )
-     case str of
-      Left s -> logI $ T.pack  s  
+     --logI $ T.pack.show $ body
+   --  let str = (eitherDecodeStrict.getResponseBody $ response :: Either String Message )
+    -- case str of
+     -- Left s -> logI $ T.pack  s  
      pure $ maybeToEither (decodeStrict.getResponseBody $ response :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
                          (decodeStrict.getResponseBody $ response :: Maybe Message)
                          (BS8.unpack $ getResponseBody  response)
@@ -183,7 +198,7 @@ extractMessage body =
 maybeToEither :: Maybe ErrorVK -> Maybe Message -> String -> Either ErrorVK Message
 maybeToEither (Just err) _ _= Left err
 maybeToEither _ (Just mess) _  = Right  mess
-maybeToEither Nothing Nothing  tx = Left $ ErrorVK{ error = Err {error_msg = tx, error_code = 0}} 
+maybeToEither Nothing Nothing  tx =   Left  ErrorVK{ error = Err {error_msg = tx, error_code = 0}} 
 {--
 sendMessage secKey ts msg = do
  body <- requestVK' url

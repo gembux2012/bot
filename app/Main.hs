@@ -75,36 +75,42 @@ logger' conf m  = loop
 
 api :: 
    Log m 
-   => MonadIO m
-   => MonadFail m
+   => MonadIO m
+   => MonadFail m
    => m (Either ErrorVK Message)
 api  = botStart  getKeyAccessUrl
 botStart  url = do
  logI "bot start"
  logI "request access"
- result <- requestVK  url
- --logI $ pack.show $ (result)
- Right (Access Access'{..})   <- requestVK  url
+ --result <- requestVK  url
+ --case result of 
+ -- Right acc -> logI $ pack.show $ acc
+ 
 
+ Right (Access acc)   <- requestVK  url
+ let url = getMessageUrl (BS8.pack $ key  acc) ( server acc) (BS8.pack.show $ ts acc )
  --let access = Access'{key =key, server=server, ts = ts}
  logI "accessed"
  logI "awaiting message"
- botStart $ getMessageUrl (BS8.pack $ key  ) (BS8.pack $ server ) (BS8.pack.show $ ts  )
+ botStart $ getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
 
+{--
  Right (Failed Failed'{..})   <- requestVK  url
  case failed' of
-    1 -> botStart $ getMessageUrl  (BS8.pack $ key ) (BS8.pack $ server ) (BS8.pack.show $  ts'' )
+    1 -> botStart $ getMessageUrl  (BS8.pack $ key acc ) (BS8.pack $ server acc) (BS8.pack.show $  ts'' )
     2 -> botStart  getKeyAccessUrl
     3 -> botStart  getKeyAccessUrl
-
+--}
  Right (Message' _ msg) <- requestVK  url
  logI $ pack.text._object $ head msg
  logI "awaiting message"
- botStart $ getMessageUrl (BS8.pack $ key  ) (BS8.pack $ server  ) (BS8.pack.show $ ts  )
+ botStart $ getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc ) (BS8.pack.show $ ts acc )
 
  Left (ErrorVK err) <- requestVK  url
  logI $ pack.show $ err
  pure $ Right NoMessage
+
+
  {--
  case result of
   Left err -> logI.pack.show $ err 

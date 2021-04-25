@@ -38,6 +38,7 @@ dependencies:
 - lifted-base
 - transformers-base
 - either
+- network-uri
 
 
 
