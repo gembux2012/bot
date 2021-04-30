@@ -12,7 +12,7 @@ module Main where
 
 import           Config                 (Config (..), readConfig)
 import           Control.Exception.Base ()
-import           Control.Monad.Reader   (runReaderT, MonadIO)
+import           Control.Monad.Reader   (runReaderT, MonadIO, when)
 import           Data.Has               (Has, getter, modifier)
 import           GHC.Generics           (Generic)
 import           Logger.App             (printLog)
@@ -77,23 +77,21 @@ api ::
    Log m 
    => MonadIO m
    => MonadFail m
+   => MonadThrow m
    => m (Either ErrorVK Message)
 api  = botStart  getKeyAccessUrl
 botStart  url = do
- logI "bot start"
- logI "request access"
+ when (url == getKeyAccessUrl) do 
+  logI $ "bot start \r\n" <> "request access"
+ --logI "request access"
  --result <- requestVK  url
- --case result of 
- -- Right acc -> logI $ pack.show $ acc
- 
 
  Right (Access acc)   <- requestVK  url
- let url = getMessageUrl (BS8.pack $ key  acc) ( server acc) (BS8.pack.show $ ts acc )
- --let access = Access'{key =key, server=server, ts = ts}
- logI "accessed"
- logI "awaiting message"
- botStart $ getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
-
+ logI "accessed" 
+ logI "awaiting message" 
+ let url = getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
+ 
+ 
 {--
  Right (Failed Failed'{..})   <- requestVK  url
  case failed' of
@@ -102,13 +100,22 @@ botStart  url = do
     3 -> botStart  getKeyAccessUrl
 --}
  Right (Message' _ msg) <- requestVK  url
- logI $ pack.text._object $ head msg
- logI "awaiting message"
- botStart $ getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc ) (BS8.pack.show $ ts acc )
+ logI $ pack.show $ msg -- .text._object $ head msg
+ logI " message"
+ mapM_
+    (\MessageUpdates {..}
+      -> botStart
+          $ sendMessageUrl
+              (BS8.pack.show  $ from_id _object) (BS8.pack  $ text _object)) msg
+
+ Right (Response rsp) <- requestVK  url
+ logI $ pack.show $ rsp
+ let url = getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
+ --let url = getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc ) (BS8.pack.show $ ts acc )
 
  Left (ErrorVK err) <- requestVK  url
  logI $ pack.show $ err
- pure $ Right NoMessage
+ botStart url
 
 
  {--

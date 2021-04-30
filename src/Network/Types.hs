@@ -28,12 +28,17 @@ data Method = GetKeyAccess | GetMessage | SendMessage
  deriving( Eq)
 
 data Url= Url
- { requestHost :: BS8.ByteString,
+ { --requestHost :: BS8.ByteString,
    requestMethod :: BS8.ByteString,
    requestPath :: BS8.ByteString,
    requestQS :: Query 
- } 
+ }
+ deriving (Eq)
 
+data Url'= Url'
+ { requestPath' :: BS8.ByteString,
+   queryStr :: Query
+ }
 
 
 
@@ -44,7 +49,7 @@ data Button = DataButton
  deriving (Generic, FromJSON, Show)
  
 data Message = Message'
- { ts' :: String ,
+ { ts' :: String,
    updates :: [MessageUpdates]
  } | Response{ response :: Integer }
    | Access  Access'  

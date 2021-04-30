@@ -84,117 +84,62 @@ newtype SecKey = SecKey { secKey :: String }
  
 
 getKeyAccessUrl  = Url 
- {requestHost = uriVK,
+ { -- requestHost = uriVK,
   requestMethod = "GET",
-  requestPath = "method/groups.getLongPollServer" ,
+  requestPath = "https://" <> uriVK <> "/method/groups.getLongPollServer" ,
   requestQS = [("access_token", Just keyGroup),("group_id", Just idGroup),("v", Just versionService)]
  }
 
-getMessageUrl :: BS8.ByteString -> String -> BS8.ByteString -> Url
+getMessageUrl :: BS8.ByteString -> BS8.ByteString  -> BS8.ByteString -> Url
 getMessageUrl k server  ts = Url
- { requestHost = BS8.pack $ uriScheme  server     ,
+ { -- requestHost = BS8.pack   server     ,
    requestMethod = "GET",
-   requestPath = BS8.pack $ uriPath  server ,
+   requestPath =  server ,
    requestQS = [("act", Just "a_check" ),("key", Just k),("ts", Just ts),("wait", Just "25")]
   } 
  
 sendMessageUrl  user_id message = Url
- { requestHost = "api.vk.com",
+ { --requestHost = "api.vk.com",
    requestMethod = "GET",
-   requestPath = "method/messages.send" ,
+   requestPath = "https://" <> uriVK <> "/method/messages.send" ,
    requestQS = [("user_id", Just user_id ),("message", Just message),
                ("title", Just ""),("access_token", Just keyGroup),("v", Just versionService)]
   } 
 
-parseUri :: String -> String -> URI
-parseUri frag u  =  do 
-   ur <- parseURI u  
-   case ur of 
-    Just ur -> do
-     when (frag == "host ") return $ uriScheme ur 
-   
+
    
 
 requestVK ::
  MonadIO m => 
- Monad m => 
+ Monad m =>
+ MonadThrow m =>
  Applicative m => 
  Log m =>
   Url -> m (Either ErrorVK Message) 
 requestVK  Url{..} = do
+  -- logI $ T.pack.show $ requestPath
+  request' <- parseRequest $ BS8.unpack $ requestPath
   let request
-        = setRequestHost requestHost  
-        $ setRequestMethod requestMethod
-        $ setRequestPath requestPath
+        =  setRequestMethod requestMethod
         $ setRequestQueryString requestQS
-        $ setRequestSecure True
-        $ setRequestPort 443
-        $ defaultRequest
+         request'
+  logI $ T.pack.show $ request
   response <- httpBS request
-  
-  --logI $ T.pack url
+ 
   let status = getResponseStatusCode response
   case status of
     200 -> do 
-     let body = getResponseBody response 
-     --logI $ T.pack.show $ body
-   --  let str = (eitherDecodeStrict.getResponseBody $ response :: Either String Message )
-    -- case str of
-     -- Left s -> logI $ T.pack  s  
+     let body = getResponseBody response
+     logI $ T.pack.BS8.unpack $ body
      pure $ maybeToEither (decodeStrict.getResponseBody $ response :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
                          (decodeStrict.getResponseBody $ response :: Maybe Message)
                          (BS8.unpack $ getResponseBody  response)
     -- pure $ prependRequest method (getResponseBody response)                    
     _ -> pure.Left $ ErrorVK{ error = Err {error_msg = "request return status ", error_code = status}}   -- $ T.pack ("method " <> show request <> " status " <> show status <> " app will be stopped")
-          
-{---
-prependRequest :: Method -> BS8.ByteString ->  Either ErrorVK   
-prependRequest m body 
-    | m == GetKeyAccess = maybeToEither (body :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
-                                        (body :: Maybe Message)
-                                        (BS8.unpack  body)
 
-      -- maybeToEither (body ^? AL.key "error" . AL.key "error_msg" . AL._String) ( decodeStrict body :: Maybe Message )
-    {--
-    
- 
-    | m == GetMessage = 
-        case body ^? key "failed" . _Integer of
-                Just failed -> 
-                  case failed of
-                    1 -> 
-                      case body ^? key "ts" . _Integer of
-                        Nothing ->  Error " unknown error, bot stop"
-                        Just ts -> Auth ("", encodeUtf8 (T.pack(show ts)))
-                    _ -> Auth ("","")
-                Nothing ->  
-                  case  decodeStrict body :: Maybe MessageVK of
-                    Just mess  ->  MessageVk mess 
-                    Nothing ->  Error  " invalid json! bot stop"
-       --}       
-   
-      
-      --body ^? key "error" . key "error_msg" . _String   >>= \err ->  
-      --body ^? key "response"  . _String >>= \resp -> maybeToEither  (Just err) (Just resp)
-       --maybeToEither (body ^? AL.key "error" . AL.key "error_msg" . AL._String) ( decodeStrict body :: Maybe Message )
-      {--
-      case body ^? key "error" . key "error_msg" . _String of
-           Just error -> Error $   T.unpack error 
-           Nothing -> 
-            case body ^? key "response"  . _String of
-             Just -> 
+responder msg = 
+ logI 
 
-extractSecKey :: AL.AsValue s => s -> Maybe (BS8.ByteString, BS8.ByteString)
-extractSecKey body =
-  body ^? key "response" . key "key" . _String >>= \secKey ->
-  body ^? key "response" . key "ts" . _Integer >>= \ts -> Just (encodeUtf8 secKey, encodeUtf8 (T.pack(show ts)))
-
-extractMessage :: AL.AsValue s => s -> Maybe (Integer, Text)
-extractMessage body =
-  body ^? key "updates" . key "object" . key "from_id" . _Integer >>= \from_id ->
-  body ^? key "updates" . key "object" . key "text" . _String >>= \msg -> Just (from_id, msg)
---}
---}
 maybeToEither :: Maybe ErrorVK -> Maybe Message -> String -> Either ErrorVK Message
 maybeToEither (Just err) _ _= Left err
 maybeToEither _ (Just mess) _  = Right  mess
