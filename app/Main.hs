@@ -48,17 +48,33 @@ main = do
   let config = snd conf
   putStrLn  $ fst conf
   let app = Application
-            { logger = Logger {dologLn  = putMVar m . MessageL }
-              -- dorequest =DoRequest { doRequest = requestVK }
+            { logger = Logger {dologLn  = putMVar m . MessageL },
+              dorequest =DoRequest { doRequest = requestVK }
             }
   forkIO $ logger' config m
   
-  runReaderT api  app
+ 
+  --runReaderT (api getKeyAccessUrl) app
  
   s <- newEmptyMVar
   putMVar m (Stop s)
   takeMVar s             
-
+  
+  case runReaderT (request getKeyAccessUrl) app of
+   Left (ErrorVK err) -> do 
+      logI err
+      pure NoMessage
+   Right (Access acc) -> do logI " accessed, awaiting message"; botRun getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
+   Right (Failed failed) -> do 
+        case failed of
+         1 -> do botRun $ getMessageUrl  (BS8.pack $ key acc ) (BS8.pack $ server acc) (BS8.pack.show $  ts'' failed' )
+         2 -> do botRun  getKeyAccessUrl
+         3 -> do botRun  getKeyAccessUrl
+   Right (Message' _ msg) -> mapM_
+                                 (\MessageUpdates {..}
+                                   -> botStart
+                                       $ sendMessageUrl
+                                           (BS8.pack.show  $ from_id _object) (BS8.pack  $ text _object)) msg
  
    
 logger' :: Config -> MVar LogCommand -> IO ()
@@ -73,23 +89,11 @@ logger' conf m  = loop
      Stop s -> do
           putMVar s ()
 
-api :: 
-   Log m 
-   => MonadIO m
-   => MonadFail m
-   => MonadThrow m
-   => m (Either ErrorVK Message)
-api  = botStart  getKeyAccessUrl
-botStart  url = do
- when (url == getKeyAccessUrl) do 
-  logI $ "bot start \r\n" <> "request access"
- --logI "request access"
- --result <- requestVK  url
+ 
 
- Right (Access acc)   <- requestVK  url
- logI "accessed" 
- logI "awaiting message" 
- let url = getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
+--botRun url = runReaderT (request url) app
+
+ 
  
  
 {--
@@ -99,15 +103,8 @@ botStart  url = do
     2 -> botStart  getKeyAccessUrl
     3 -> botStart  getKeyAccessUrl
 --}
- Right (Message' _ msg) <- requestVK  url
- logI $ pack.show $ msg -- .text._object $ head msg
- logI " message"
- mapM_
-    (\MessageUpdates {..}
-      -> botStart
-          $ sendMessageUrl
-              (BS8.pack.show  $ from_id _object) (BS8.pack  $ text _object)) msg
 
+{--
  Right (Response rsp) <- requestVK  url
  logI $ pack.show $ rsp
  let url = getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
@@ -116,7 +113,7 @@ botStart  url = do
  Left (ErrorVK err) <- requestVK  url
  logI $ pack.show $ err
  botStart url
-
+--}
 
  {--
  case result of
@@ -156,8 +153,8 @@ dispatcherAnswer Message{..} =
  
  --}
 data  Application m   = Application 
-  {logger :: Logger m
-   -- dorequest :: DoRequest m
+  {logger :: Logger m,
+   dorequest :: DoRequest m
   }
   deriving stock Generic
 

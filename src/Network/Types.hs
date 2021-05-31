@@ -20,6 +20,7 @@ import Control.Monad.Cont (when)
 import qualified Data.Aeson.Lens as AL 
 import Control.Lens.Fold
 import Data.Text.Encoding (encodeUtf8)
+import Network.HTTP.Simple
 
 
 --data ResponseMessage' = Message' BS8.ByteString | Stop
@@ -47,7 +48,11 @@ data Button = DataButton
 
  }
  deriving (Generic, FromJSON, Show)
+
+data ToRequest = ACCESS Url | GETMESSAGE Url  | SENDMESSAGE Url
  
+
+
 data Message = Message'
  { ts' :: String,
    updates :: [MessageUpdates]
