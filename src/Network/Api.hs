@@ -14,6 +14,7 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE Strict #-}
+{-# LANGUAGE TemplateHaskellQuotes #-}
 
 module Network.Api
   
@@ -56,7 +57,8 @@ import Network.ErrorTypes (ErrorVK)
 import Network.Types 
 import Network.Types (Message (..))
 import Network.URI
-import Control.Monad (when)
+import Control.Monad (when )
+import Control.Monad.Catch 
 
 --import Network.Types (MessageVK)
 
@@ -107,44 +109,52 @@ sendMessageUrl  user_id message = Url
   } 
 
 
-   
 
+
+{--
 requestVK ::
- MonadIO m => 
+ MonadIO m =>
  Monad m =>
  MonadThrow m =>
  Applicative m => 
  Log m =>
-  Url -> m (Either ErrorVK Message)
+ Url ->  Message
+--}
+
+
 requestVK  Url{..} = do
-  -- logI $ T.pack.show $ requestPath
+  --logI $ T.pack.show $ Url{..}
   request' <- parseRequest $ BS8.unpack $ requestPath
   let request
         =  setRequestMethod requestMethod
         $ setRequestQueryString requestQS
          request'
-  logI $ T.pack.show $ request
+  --logI $ T.pack.show $ request
   response <- httpBS request
  
   let status = getResponseStatusCode response
   case status of
     200 -> do 
      let body = getResponseBody response
-     logI $ T.pack.BS8.unpack $ body
-     pure $ maybeToEither (decodeStrict.getResponseBody $ response :: Maybe ErrorVK) -- prependRequest method (getResponseBody response)
-                         (decodeStrict.getResponseBody $ response :: Maybe Message)
-                         (BS8.unpack $ getResponseBody  response)
-    -- pure $ prependRequest method (getResponseBody response)                    
-    _ -> pure.Left $ ErrorVK{ error = Err {error_msg = "request return status ", error_code = status}}   -- $ T.pack ("method " <> show request <> " status " <> show status <> " app will be stopped")
-
-responder msg = 
- logI 
-
+     --logI $ T.pack.BS8.unpack $ body
+     case decodeStrict.getResponseBody $ response :: Maybe Message of
+      Just  mess -> do 
+        -- logI $ T.pack.show $ mess
+        pure mess
+      Nothing -> do
+        logI $ T.pack "Invalid Json"  
+        logI $ T.pack.BS8.unpack $ body
+        pure NoMessage
+    _ -> do 
+        logI $ T.pack "no 200"
+        pure NoMessage
+       
+{--
 maybeToEither :: Maybe ErrorVK -> Maybe Message -> String -> Either ErrorVK Message
 maybeToEither (Just err) _ _= Left err
 maybeToEither _ (Just mess) _  = Right  mess
 maybeToEither Nothing Nothing  tx =   Left  ErrorVK{ error = Err {error_msg = tx, error_code = 0}} 
-{--
+
 sendMessage secKey ts msg = do
  body <- requestVK' url
  case body of

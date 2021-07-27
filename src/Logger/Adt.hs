@@ -7,7 +7,7 @@
 
 module Logger.Adt
   ( LogOpts (..),
-    Logger (..),
+    
     Priority (..),
     defaultLogOpts 
   )
@@ -18,7 +18,7 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 import GHC.Stack.Types (HasCallStack)
 
-newtype Logger m = Logger {dologLn :: HasCallStack => Text -> m ()}
+--newtype Logger m = Logger {dologLn :: HasCallStack => Text -> m ()}
 
 data Priority = INFO | NOTICE | WARNING | ERROR deriving (Show, Eq, Ord)
 

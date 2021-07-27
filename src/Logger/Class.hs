@@ -2,10 +2,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Logger.Class
-  ( Log (..),
-  )
+
 where
 
 import Control.Monad.Reader (ReaderT, asks, lift)
@@ -48,4 +49,6 @@ instance Loggable Text where
 
 instance Loggable Priority  where
  fromLoggable = pack.show
-  
+ 
+instance Loggable String  where
+ fromLoggable = pack  

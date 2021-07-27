@@ -39,6 +39,7 @@ dependencies:
 - transformers-base
 - either
 - network-uri
+- extra
 
 
 

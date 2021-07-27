@@ -1,18 +1,4 @@
-04-28-2021 16:22:27 +07 INFO  message
-04-28-2021 16:22:27 +07 INFO bot start
-04-28-2021 16:22:27 +07 INFO request access
-04-28-2021 16:22:27 +07 INFO Request {
-  host                 = "api.vk.com"
-  port                 = 443
-  secure               = True
-  requestHeaders       = []
-  path                 = "/method/messages.send"
-  queryString          = "?user_id=454751226&message=0%3F%40200&title=&access_token=13b47b20e6324c0dcc288baec4a318ee359bd16dc2f57c7bf215755241faf955de12b014a780ac7f9e455&v=5.50"
-  method               = "GET"
-  proxy                = Nothing
-  rawBody              = False
-  redirectCount        = 10
-  responseTimeout      = ResponseTimeoutDefault
-  requestVersion       = HTTP/1.1
-}
-
+07-27-2021 16:08:47 +07 INFO  awaiting messages 
+07-27-2021 16:08:47 +07 INFO message_reply
+07-27-2021 16:08:47 +07 INFO  awaiting messages 
+07-27-2021 16:09:12 +07 INFO  awaiting messages 

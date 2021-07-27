@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Network.Types
  
@@ -34,7 +35,7 @@ data Url= Url
    requestPath :: BS8.ByteString,
    requestQS :: Query 
  }
- deriving (Eq)
+ deriving (Eq,Show)
 
 data Url'= Url'
  { requestPath' :: BS8.ByteString,
@@ -53,17 +54,24 @@ data ToRequest = ACCESS Url | GETMESSAGE Url  | SENDMESSAGE Url
  
 
 
-data Message = Message'
+data Message  = Message' 
  { ts' :: String,
    updates :: [MessageUpdates]
- } | Response{ response :: Integer }
+   
+ } | Response{ response :: Integer  }
    | Access  Access'  
    | Failed {failed :: Failed'}
-             
+   | ErrorVK {error :: Err}          
    | NoMessage
+   
   deriving ( Show) 
 
-
+data Err= Err 
+ { error_code :: Int,
+   error_msg :: String 
+ } 
+ deriving (Generic, FromJSON,  Show)
+ 
 data Access' = Access'     
   {   
    key :: String,
@@ -78,14 +86,15 @@ data Failed' = Failed'
   }  
  deriving ( Show)
  
-instance FromJSON Message where
-  parseJSON = withObject "message or response or access or filed" $ \o ->  asum [
-        Message' <$> o .: "ts" <*> o .: "updates",
-        Response <$> o .: "response",
+
+instance FromJSON Message   where
+  parseJSON  = withObject "message or response or access or filed" $ \o  ->  asum [
         Access   <$>  o .:  "response" ,
+        Message' <$> o .: "ts" <*> o .: "updates" , 
+        Response <$> o .: "response"  ,
         Failed  <$> o .: "failed"  
          ]
---}         
+         
                     
 
 instance FromJSON Failed' where
@@ -122,17 +131,24 @@ instance FromJSON MessageUpdates where
 
 data MessageObject = MessageObject
  { id :: Int,
-   from_id :: Integer,
-   owner_id :: Integer,
-   date :: Integer,
-   marked_as_ads :: Integer,
-   post_type :: String,
-   text :: String,
-   can_edit :: Int,
-   created_by :: Integer,
-   can_delete :: Int,
-   comments :: MessageComment
- } 
+   from_id :: Maybe Integer,
+   owner_id :: Maybe Integer,
+   date :: Maybe Integer,
+   marked_as_ads :: Maybe Integer,
+   post_type :: Maybe String,
+   text :: Maybe String,
+   can_edit :: Maybe Int,
+   created_by :: Maybe Integer,
+   can_delete :: Maybe Int,
+   comments :: Maybe MessageComment,
+   out  :: Maybe Int,
+   user_id  :: Maybe Integer,
+   read_state  :: Maybe Int,
+   title  :: Maybe String,
+   body  :: Maybe String 
+   -- random_id  :: Int
+  --owner_ids  :: []
+  }
   deriving (Generic, FromJSON, Show)
 
 data MessageComment = MessageComment

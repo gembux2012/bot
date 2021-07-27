@@ -1,167 +1,170 @@
-{-# LANGUAGE AllowAmbiguousTypes   #-}
-{-# LANGUAGE BlockArguments        #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE DerivingStrategies    #-}
-{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE RecordWildCards       #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
+--{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
-import           Config                 (Config (..), readConfig)
-import           Control.Exception.Base ()
-import           Control.Monad.Reader   (runReaderT, MonadIO, when)
-import           Data.Has               (Has, getter, modifier)
-import           GHC.Generics           (Generic)
-import           Logger.App             (printLog)
-
-import           Logger.Adt             (Logger(..), )
-import           Logger.Class           (Log (..))
-import qualified Data.ByteString.Char8 as BS8
-import Data.Text (Text, pack, unpack)
+import Config (Config (..), readConfig)
 --import Data.ByteString.Char8 (pack)
-import Network.Api 
-import Control.Monad.Catch.Pure (MonadThrow)
-import Control.Monad.Base (MonadBase)
+
+import Control.Applicative
 import Control.Concurrent
+import Control.Exception.Base ()
+import Control.Monad.Base (MonadBase)
+import Control.Monad.Catch.Pure (MonadThrow)
+import Control.Monad.Reader
+  ( MonadIO,
+    Reader,
+    ask,
+    liftM,
+    runReaderT,
+    when,
+  )
+import qualified Data.ByteString.Char8 as BS8
+import Data.Has (Has, getter, modifier)
 import qualified Data.Map as Map
-
-import Network.Class
-import Network.Types
-import Network.Api
-import Data.Text.Encoding (encodeUtf8)
 import Data.Map (Map)
-import Network.ErrorTypes 
+import Data.Text (Text, pack, unpack)
+import Data.Text.Encoding (encodeUtf8, decodeUtf8)
+import GHC.Generics (Generic)
+import Logger.Adt
+import Logger.App (printLog)
+import Logger.Class
+import Network.Api
+import Network.Api
+import Network.Class
+import Network.ErrorTypes
+import Network.Types
 import Network.Types (Message)
 import Network.Types (Message)
-
 
 data LogCommand = MessageL Text | Stop (MVar ())
 
-access =("","")
 main :: IO ()
 main = do
   conf <- readConfig
   m <- newEmptyMVar
   let config = snd conf
-  putStrLn  $ fst conf
-  let app = Application
-            { logger = Logger {dologLn  = putMVar m . MessageL },
-              dorequest =DoRequest { doRequest = requestVK }
-            }
+  putStrLn $ fst conf
+
+  let app =
+        Application
+          { logger = Logger {dologLn = putMVar m . MessageL}
+          --dorequest = DoRequest { doRequest = requestVK }
+          }
+
   forkIO $ logger' config m
-  
- 
-  --runReaderT (api getKeyAccessUrl) app
- 
+
+  runReaderT (api getKeyAccessUrl) app
+
   s <- newEmptyMVar
   putMVar m (Stop s)
-  takeMVar s             
-  
-  case runReaderT (request getKeyAccessUrl) app of
-   Left (ErrorVK err) -> do 
-      logI err
-      pure NoMessage
-   Right (Access acc) -> do logI " accessed, awaiting message"; botRun getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
-   Right (Failed failed) -> do 
-        case failed of
-         1 -> do botRun $ getMessageUrl  (BS8.pack $ key acc ) (BS8.pack $ server acc) (BS8.pack.show $  ts'' failed' )
-         2 -> do botRun  getKeyAccessUrl
-         3 -> do botRun  getKeyAccessUrl
-   Right (Message' _ msg) -> mapM_
-                                 (\MessageUpdates {..}
-                                   -> botStart
-                                       $ sendMessageUrl
-                                           (BS8.pack.show  $ from_id _object) (BS8.pack  $ text _object)) msg
- 
-   
+  takeMVar s
+
 logger' :: Config -> MVar LogCommand -> IO ()
-logger' conf m  = loop 
- where  
-   loop   = do
-    cmd <- takeMVar m
-    case cmd of
-     MessageL msg -> do
-       printLog  (logOpts conf)  msg 
-       loop      
-     Stop s -> do
+logger' conf m = loop
+  where
+    loop = do
+      cmd <- takeMVar m
+      case cmd of
+        MessageL msg -> do
+          printLog (logOpts conf) msg
+          loop
+        Stop s -> do
           putMVar s ()
 
- 
+api ::
+  Log m =>
+  MonadIO m =>
+  MonadThrow m =>
+  MonadFail m =>
+  Url ->
+  m Message
+api url = do
+  logI  " get access "
+  resp <- requestVK url
+  case resp of
+    Access access -> do
+      logI  " accessed, awaiting messages "
+      getMessage  (BS8.pack $ key access)
+                  (BS8.pack $ server access) 
+                  (BS8.pack . show $ ts access)
+    _ -> do
+      logI $ pack . show $ resp
+      pure NoMessage
 
---botRun url = runReaderT (request url) app
+getMessage :: 
+   Log m =>
+   MonadIO m =>
+   MonadThrow m =>
+   MonadFail m => 
+   BS8.ByteString -> BS8.ByteString -> BS8.ByteString -> m Message 
+getMessage key server ts = do
+  resp <- requestVK $ getMessageUrl key server ts
+  case resp of
+    Message' ts' updates -> 
+      if not (null updates)
+        then do
+          mapM_
+            ( \MessageUpdates {..} -> 
+                case text _object of 
+                  Just text -> 
+                    case from_id _object of 
+                     Just from_id -> do 
+                      logI $ pack 
+                       $ "received message from user id :" <> show from_id  
+                           <> " " <> text 
+                      sendMessage
+                       (BS8.pack . show $ from_id )
+                       (BS8.pack  text )
+                      --Nothing ->  getMessage key server (BS8.pack ts') 
+                  Nothing ->   logI _type    
+            )
+            updates
+          logI  " awaiting messages "
+          getMessage key server (BS8.pack ts')
+        else do
+          logI  " awaiting messages "
+          getMessage key server ts
+    _ -> do
+        logI $ pack . show $ resp  
+        pure NoMessage    
+    
+sendMessage :: 
+    Log m =>
+    MonadIO m =>
+    MonadThrow m =>
+    MonadFail m => 
+ BS8.ByteString -> BS8.ByteString -> m () 
+sendMessage id text = do
+  logI $ pack $ "send message to user id:" <> BS8.unpack id <> encodeUtf8.BS8.unpack text 
+  resp <- requestVK $ sendMessageUrl id  text
+  case resp of
+    Response rsp -> do
+      logI $ pack ("recponse code " <> show rsp)
+    _ -> do
+          logI $ pack . show $ resp
+          --pure NoMessage  
 
- 
- 
- 
 {--
- Right (Failed Failed'{..})   <- requestVK  url
- case failed' of
-    1 -> botStart $ getMessageUrl  (BS8.pack $ key acc ) (BS8.pack $ server acc) (BS8.pack.show $  ts'' )
-    2 -> botStart  getKeyAccessUrl
-    3 -> botStart  getKeyAccessUrl
---}
+dispatcherAnswer Message{..} =
+ case text._object $ head updates  of -- /= "/" = botStart SendMessage
+   _ -> SendMessage
 
-{--
- Right (Response rsp) <- requestVK  url
- logI $ pack.show $ rsp
- let url = getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc) (BS8.pack.show $ ts acc )
- --let url = getMessageUrl (BS8.pack $ key  acc) (BS8.pack $ server acc ) (BS8.pack.show $ ts acc )
-
- Left (ErrorVK err) <- requestVK  url
- logI $ pack.show $ err
- botStart url
---}
-
- {--
- case result of
-  Left err -> logI.pack.show $ err 
-  Right Access{..}  -> url = response'
-  Right Message'{..} -> logI.pack.show $ show updates
- pure $ Right NoMessage
  --}
-{--
-botStart m url key ts = do
- --let access' = ("","")
- if m == GetKeyAccess then  
-  logI "request an access key"
-   else
-    logI "waiting message"
- result <- request m url 
- case result of 
-  Error err -> do 
-   logE $ pack err
-   pure NoResponse
-  Auth (key,ts) -> do 
-   --let access' =(key,ts)
-   logI  " access key received"
-   botStart GetMessage (getMessageUrl key ts ) key ts
-  MessageVk MessageVK{..} -> do
-   logI $ pack("message received: " ++ (show.text._object $ head updates) ++ "from: " 
-      ++ (show.from_id._object $ head updates))    --show (from_id (_object (head updates))))
-   case dispatcherAnswer MessageVK{..} of 
-    SendMessage -> do 
-      botStart SendMessage (sendMessageUrl  (BS8.pack.show.from_id._object $ head updates) 
-       (BS8.pack.text._object $ head updates)) key (encodeUtf8 $ pack ts) 
-      botStart GetMessage (getMessageUrl key (encodeUtf8 $ pack ts)) key (encodeUtf8 $ pack ts)
- 
-dispatcherAnswer Message{..} = 
- case text._object $ head updates  of -- /= "/" = botStart SendMessage   
-   _ -> SendMessage 
- 
- --}
-data  Application m   = Application 
-  {logger :: Logger m,
-   dorequest :: DoRequest m
+data Application m = Application
+  { logger :: Logger m
+  --dorequest :: DoRequest m
   }
-  deriving stock Generic
+  deriving stock (Generic)
 
 instance Has (Logger m) (Application m) where
   getter = logger
   modifier f a = a {logger = f . logger $ a}
-
--- instance Has (DoRequest m) (Application m) where
- -- getter = dorequest
- -- modifier f a = a {dorequest = f . dorequest $ a}

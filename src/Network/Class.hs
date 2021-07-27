@@ -18,11 +18,11 @@ import qualified Data.ByteString.Char8 as BS8
 
    
 
-newtype DoRequest m = DoRequest  {doRequest ::   Url ->  m (Either ErrorVK Message)}
+newtype DoRequest m = DoRequest  {doRequest ::   Url ->  m Message}
 
 class Monad m => Requestable m where
- request  ::  Url ->  m (Either ErrorVK Message)
- 
+ request  ::  Url ->  m  Message
+ --request  url  =  requestVK url
 
 
 instance
@@ -31,3 +31,4 @@ instance
   ) =>
   Requestable (ReaderT r m)   where
    request  url  = asks getter >>= \(DoRequest doReq) -> lift $ doReq url
+  
