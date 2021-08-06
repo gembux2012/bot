@@ -44,6 +44,10 @@ import Network.ErrorTypes
 import Network.Types
 import Network.Types (Message)
 import Network.Types (Message)
+import qualified Data.ByteString.Lazy as LBS
+import Data.Aeson (encode)
+--import Data.Aeson.Encode (encode)
+--import Data.Aeson (encode)
 
 data LogCommand = MessageL Text | Stop (MVar ())
 
@@ -93,9 +97,10 @@ api url = do
   case resp of
     Access access -> do
       logI  " accessed, awaiting messages "
+      logI $ key access
       getMessage  (BS8.pack $ key access)
                   (BS8.pack $ server access) 
-                  (BS8.pack . show $ ts access)
+                  (BS8.pack $ ts access)
     _ -> do
       logI $ pack . show $ resp
       pure NoMessage
@@ -114,18 +119,13 @@ getMessage key server ts = do
         then do
           mapM_
             ( \MessageUpdates {..} -> 
-                case text _object of 
-                  Just text -> 
-                    case from_id _object of 
-                     Just from_id -> do 
-                      logI $ pack 
-                       $ "received message from user id :" <> show from_id  
-                           <> " " <> text 
-                      sendMessage
-                       (BS8.pack . show $ from_id )
-                       (BS8.pack  text )
-                      --Nothing ->  getMessage key server (BS8.pack ts') 
-                  Nothing ->   logI _type    
+                case  _type of
+                  "message_new"  -> do
+                      logI $ pack "event: "  <>  pack _type
+                      logI $ pack (show resp)
+                      logI $ pack  "received message from user id :"  <> pack (show from_id) <> pack " " <> pack text
+                      sendMessage (BS8.pack . show $ from_id) text _payload 
+                  _ -> logI $ pack "event: "  <>  pack _type
             )
             updates
           logI  " awaiting messages "
@@ -142,10 +142,12 @@ sendMessage ::
     MonadIO m =>
     MonadThrow m =>
     MonadFail m => 
- BS8.ByteString -> BS8.ByteString -> m () 
-sendMessage id text = do
-  logI $ pack $ "send message to user id:" <> BS8.unpack id <> encodeUtf8.BS8.unpack text 
-  resp <- requestVK $ sendMessageUrl id  text
+ BS8.ByteString -> String -> String -> m () 
+sendMessage id text btn = do
+  logI $ pack $ "send message to user id:" <> BS8.unpack id <> " " <> text 
+  --logI $ BS8.unpack.LBS.toStrict $ encode repeatButtons
+  let answer = dispatcherAnswer text btn
+  resp <- requestVK $ uncurry (sendMessageUrl id) answer 
   case resp of
     Response rsp -> do
       logI $ pack ("recponse code " <> show rsp)
@@ -153,10 +155,11 @@ sendMessage id text = do
           logI $ pack . show $ resp
           --pure NoMessage  
 
-{--
-dispatcherAnswer Message{..} =
- case text._object $ head updates  of -- /= "/" = botStart SendMessage
-   _ -> SendMessage
+dispatcherAnswer :: String -> String ->  ( BS8.ByteString,  BS8.ByteString)
+dispatcherAnswer ['\\','r','e','p','e','a','t'] _ = (BS8.pack "how many times repeat message ?",  
+                                                   LBS.toStrict $ encode repeatButtons)
+dispatcherAnswer str btn = (BS8.pack (concat [str <> " "| r <- [0.. read btn]]), 
+                            LBS.toStrict $ encode emptyButtons)
 
  --}
 data Application m = Application

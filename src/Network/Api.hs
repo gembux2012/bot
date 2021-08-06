@@ -47,6 +47,7 @@ import Network.HTTP.Conduit (http)
 import Network.HTTP.Simple
 import Data.Aeson.Types (Parser, parseMaybe, FromJSON, Value, withObject, (.:), fieldLabelModifier, genericParseJSON, defaultOptions)
 import Data.Aeson (decodeStrict,parseJSON, eitherDecodeStrict)
+--import Data.Aeson.Encode
 import Data.Either 
 import Data.String
 --import Control.Monad.Error
@@ -77,7 +78,7 @@ keyGroup = "13b47b20e6324c0dcc288baec4a318ee359bd16dc2f57c7bf215755241faf955de12
 
 keyUser = "454751226"
 
-versionService = "5.50" :: BS8.ByteString
+versionService = "5.103" :: BS8.ByteString
 
 uriVK = "api.vk.com"
 
@@ -99,16 +100,62 @@ getMessageUrl k server  ts = Url
    requestPath =  server ,
    requestQS = [("act", Just "a_check" ),("key", Just k),("ts", Just ts),("wait", Just "25")]
   } 
- 
-sendMessageUrl  user_id message = Url
- { --requestHost = "api.vk.com",
+
+sendMessageUrl :: BS8.ByteString ->  BS8.ByteString -> BS8.ByteString -> Url   
+sendMessageUrl  user_id message buttons = Url
+ {
    requestMethod = "GET",
    requestPath = "https://" <> uriVK <> "/method/messages.send" ,
-   requestQS = [("user_id", Just user_id ),("message", Just message),
-               ("title", Just ""),("access_token", Just keyGroup),("v", Just versionService)]
-  } 
+   requestQS = [("user_id", Just user_id ),
+               ("random_id", Just "0"),
+               ("peer_id", Just idGroup),
+               ("message", Just message),
+               ("dont_parse_links", Just "0"),
+               ("disable_mentions", Just "0"),
+               ("intent", Just "default"),
+              -- ("title", Just ""),
+               ("keyboard" , Just buttons),
+               ("access_token", Just keyGroup),("v", Just versionService)]
+ } 
 
+repeatButtons = Buttons 
+ { one_time = False,
+   buttons = 
+   [
+    [Button
+     { action = Action
+      { type' = "text",
+        payload = "{\"button\": \"1\"}",
+        label = "1"
+      },
+      color = "primary"
+     },
 
+    Button
+        { action = Action 
+         { type' = "text",
+           payload = "{\"button\": \"2\"}",
+           label = "2" 
+         },
+         color = "primary"
+        },
+    Button
+        { action = Action 
+         { type' = "text",
+           payload = "{\"button\": \"3\"}",
+           label = "3" 
+         },
+         color = "primary"
+        }    
+   ]
+  ]
+
+ }
+
+emptyButtons = Buttons
+  { one_time = False,
+    buttons =  [ ]
+    }
 
 
 {--

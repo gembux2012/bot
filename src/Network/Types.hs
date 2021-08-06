@@ -22,6 +22,7 @@ import qualified Data.Aeson.Lens as AL
 import Control.Lens.Fold
 import Data.Text.Encoding (encodeUtf8)
 import Network.HTTP.Simple
+import Text.Read (readMaybe)
 
 
 --data ResponseMessage' = Message' BS8.ByteString | Stop
@@ -43,12 +44,34 @@ data Url'= Url'
  }
 
 
-
-data Button = DataButton
- {
-
+data Buttons = Buttons
+ {one_time :: Bool,
+  buttons :: [[Button]]
  }
- deriving (Generic, FromJSON, Show)
+ deriving (Generic, ToJSON)
+ 
+
+ 
+data Button = Button
+ { action :: Action,
+   color :: String
+ }
+ deriving (Generic, ToJSON)
+ 
+data Action = Action
+  { type' :: String,
+    payload :: String,
+    label :: String
+  } 
+ 
+
+instance ToJSON Action where
+  toJSON Action{..} = object [
+    "type" .= type',
+    "payload"  .= payload,
+    "label" .= label 
+    ]  
+
 
 data ToRequest = ACCESS Url | GETMESSAGE Url  | SENDMESSAGE Url
  
@@ -76,7 +99,7 @@ data Access' = Access'
   {   
    key :: String,
    server :: String,
-   ts :: Int
+   ts :: String
    }
    deriving ( Show) 
 
@@ -106,16 +129,15 @@ instance FromJSON Failed' where
 
 instance FromJSON Access' where
   parseJSON = withObject " access " $ \o -> do
-   -- resp <- o .: "response"
    key <- o .: "key"
    server <- o .: "server"
    ts <-  o .: "ts"
    return Access'{..}
              
-   -- o .: "response" >>= \orsp -> Access' <$> orsp .: "key" <*> "server" <*> "ts" 
+ 
  
 
-  
+{-  
 data MessageUpdates = MessageUpdates
   { _type :: String,
     _object :: MessageObject,
@@ -128,7 +150,42 @@ data MessageUpdates = MessageUpdates
 instance FromJSON MessageUpdates where
   parseJSON = genericParseJSON defaultOptions {
                 fieldLabelModifier = drop 1 }
+-}
+data MessageUpdates = MessageUpdates
+  { _type :: String,
+    from_id :: Integer,
+    text :: String,
+    _payload :: String
+  }
+  deriving (Generic, Show)
+  
+instance FromJSON MessageUpdates where
+   parseJSON = withObject " message " $ \o -> do
+     _type <- o .: "type" 
+     obj <- o .: "object" 
+     case _type of
+      "message_new" -> do
+        message <- obj .: "message"  
+        from_id <- message .: "from_id"
+        text <- message .: "text"
+        _payload <- do 
+         pl <-  message .:? "payload"
+         case  pl :: Maybe String of
+           Just _ -> return text     
+           Nothing -> return ""
+           
+        --let _payload = ""
+        return MessageUpdates{..}
+      _ -> do 
+        let from_id = 0
+        let text = ""
+        let _payload = ""
+        return MessageUpdates{..}  
+  
 
+     
+     
+{--
 data MessageObject = MessageObject
  { id :: Int,
    from_id :: Maybe Integer,
@@ -150,7 +207,7 @@ data MessageObject = MessageObject
   --owner_ids  :: []
   }
   deriving (Generic, FromJSON, Show)
-
+--}
 data MessageComment = MessageComment
   { count :: Int
   }
