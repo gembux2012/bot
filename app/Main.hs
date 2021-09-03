@@ -11,6 +11,7 @@
 
 module Main where
 
+
 import Config (Config (..), readConfig)
 --import Data.ByteString.Char8 (pack)
 
@@ -37,16 +38,19 @@ import GHC.Generics (Generic)
 import Logger.Adt
 import Logger.App (printLog)
 import Logger.Class
-import Network.Api
-import Network.Api
+import Network.App
 import Network.Class
-import Network.ErrorTypes
+--import Network.ErrorTypes
 import Network.Types
-import Network.Types (Message)
-import Network.Types (Message)
+-- import Network.Types (Message)
+-- import Network.Types (Message)
 import qualified Data.ByteString.Lazy as LBS
 import Data.Aeson (encode)
---import Data.Aeson.Encode (encode)
+import Control.Monad.State.Lazy (runStateT, execStateT)
+import Control.Monad.RWS.Lazy (runRWST, tell, RWST, execRWST, evalRWST)
+import Control.Monad.Trans.Writer.CPS (Writer, WriterT)
+import Control.Monad.Writer
+import Data.ByteString.Lazy.UTF8
 --import Data.Aeson (encode)
 
 data LogCommand = MessageL Text | Stop (MVar ())
@@ -57,16 +61,16 @@ main = do
   m <- newEmptyMVar
   let config = snd conf
   putStrLn $ fst conf
-
-  let app =
+      
+  let app  =
         Application
-          { logger = Logger {dologLn = putMVar m . MessageL}
-          --dorequest = DoRequest { doRequest = requestVK }
+          { logger = Logger {dologLn = putMVar m . MessageL},
+            dorequest = DoRequest { doRequest = requestVK }
           }
 
   forkIO $ logger' config m
-
-  runReaderT (api getKeyAccessUrl) app
+ 
+  runRWST  ( api getKeyAccessUrl) app ""
 
   s <- newEmptyMVar
   putMVar m (Stop s)
@@ -84,16 +88,18 @@ logger' conf m = loop
         Stop s -> do
           putMVar s ()
 
+
+
+
 api ::
   Log m =>
-  MonadIO m =>
-  MonadThrow m =>
-  MonadFail m =>
-  Url ->
-  m Message
+  Requestable m =>
+  Control.Monad.Writer.MonadWriter [Char] m =>
+  Url ->  m Message 
+   
 api url = do
   logI  " get access "
-  resp <- requestVK url
+  resp <- request url
   case resp of
     Access access -> do
       logI  " accessed, awaiting messages "
@@ -101,18 +107,19 @@ api url = do
       getMessage  (BS8.pack $ key access)
                   (BS8.pack $ server access) 
                   (BS8.pack $ ts access)
+    ErrorVK error ->  do
+     logI $ error_msg error
+     pure NoMessage
     _ -> do
       logI $ pack . show $ resp
       pure NoMessage
 
 getMessage :: 
    Log m =>
-   MonadIO m =>
-   MonadThrow m =>
-   MonadFail m => 
+   Requestable m =>
    BS8.ByteString -> BS8.ByteString -> BS8.ByteString -> m Message 
 getMessage key server ts = do
-  resp <- requestVK $ getMessageUrl key server ts
+  resp <- request $ getMessageUrl key server ts
   case resp of
     Message' ts' updates -> 
       if not (null updates)
@@ -138,16 +145,14 @@ getMessage key server ts = do
         pure NoMessage    
     
 sendMessage :: 
-    Log m =>
-    MonadIO m =>
-    MonadThrow m =>
-    MonadFail m => 
- BS8.ByteString -> String -> String -> m () 
+  Log m =>
+  Requestable m =>
+  BS8.ByteString -> String -> String -> m () 
 sendMessage id text btn = do
   logI $ pack $ "send message to user id:" <> BS8.unpack id <> " " <> text 
   --logI $ BS8.unpack.LBS.toStrict $ encode repeatButtons
   let answer = dispatcherAnswer text btn
-  resp <- requestVK $ uncurry (sendMessageUrl id) answer 
+  resp <- request $ uncurry (sendMessageUrl id) answer 
   case resp of
     Response rsp -> do
       logI $ pack ("recponse code " <> show rsp)
@@ -156,18 +161,24 @@ sendMessage id text btn = do
           --pure NoMessage  
 
 dispatcherAnswer :: String -> String ->  ( BS8.ByteString,  BS8.ByteString)
-dispatcherAnswer ['\\','r','e','p','e','a','t'] _ = (BS8.pack "how many times repeat message ?",  
+dispatcherAnswer ['\\','r','e','p','e','a','t'] _ = (BS8.pack "how many times will you repeat ?",  
                                                    LBS.toStrict $ encode repeatButtons)
-dispatcherAnswer str btn = (BS8.pack (concat [str <> " "| r <- [0.. read btn]]), 
-                            LBS.toStrict $ encode emptyButtons)
-
+--dispatcherAnswer str  _ = ( encodeUtf8.pack $ str, LBS.toStrict $ encode emptyButtons)  
+dispatcherAnswer str  btn 
+  | read btn > 0 =  (BS8.pack $ "ОК, i will repeat over " <> read btn <> " try",
+                     LBS.toStrict $ encode repeatButtons)
+  | otherwise = ( encodeUtf8.pack $ str, LBS.toStrict $ encode emptyButtons)
  --}
 data Application m = Application
-  { logger :: Logger m
-  --dorequest :: DoRequest m
+  { logger :: Logger m,
+    dorequest :: DoRequest m
   }
   deriving stock (Generic)
 
 instance Has (Logger m) (Application m) where
   getter = logger
   modifier f a = a {logger = f . logger $ a}
+  
+instance Has (DoRequest m) (Application m) where
+  getter = dorequest
+  modifier f a = a {dorequest = f . dorequest $ a}  

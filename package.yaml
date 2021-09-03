@@ -39,7 +39,7 @@ dependencies:
 - transformers-base
 - either
 - network-uri
-
+- utf8-string
 
 
 

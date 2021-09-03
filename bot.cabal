@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4f2e5c29d22ebcdb9af77d5087f1c7ed876003664cd26c50685f62ec88bbae26
+-- hash: 54129a9bbde24eae21af2e66ded541bce150a69d2f4ec83505f893d65cc985e7
 
 name:           bot
 version:        0.1.0.0
@@ -32,7 +32,7 @@ library
       Logger.App
       Logger.Class
       Logger.Tmp
-      Network.Api
+      Network.App
       Network.Class
       Network.ErrorTypes
       Network.Types
@@ -61,6 +61,7 @@ library
     , time
     , transformers
     , transformers-base
+    , utf8-string
   default-language: Haskell2010
 
 executable bot-exe
@@ -91,6 +92,7 @@ executable bot-exe
     , time
     , transformers
     , transformers-base
+    , utf8-string
   default-language: Haskell2010
 
 test-suite bot-test
@@ -122,4 +124,5 @@ test-suite bot-test
     , time
     , transformers
     , transformers-base
+    , utf8-string
   default-language: Haskell2010

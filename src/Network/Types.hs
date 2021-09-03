@@ -84,13 +84,13 @@ data Message  = Message'
  } | Response{ response :: Integer  }
    | Access  Access'  
    | Failed {failed :: Failed'}
-   | ErrorVK {error :: Err}          
+   | ErrorVK {error :: ErrVK}          
    | NoMessage
    
   deriving ( Show) 
 
-data Err= Err 
- { error_code :: Int,
+data ErrVK= ErrVK 
+ { error_code :: String,
    error_msg :: String 
  } 
  deriving (Generic, FromJSON,  Show)

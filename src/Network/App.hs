@@ -16,7 +16,7 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE TemplateHaskellQuotes #-}
 
-module Network.Api
+module Network.App
   
 where
 
@@ -52,11 +52,11 @@ import Data.Either
 import Data.String
 --import Control.Monad.Error
 import Network.Types 
-import Network.ErrorTypes
+--import Network.ErrorTypes
 import Data.Maybe 
-import Network.ErrorTypes (ErrorVK)
+-- import Network.ErrorTypes (ErrorVK)
 import Network.Types 
-import Network.Types (Message (..))
+--import Network.Types (Message (..))
 import Network.URI
 import Control.Monad (when )
 import Control.Monad.Catch 
@@ -158,15 +158,15 @@ emptyButtons = Buttons
     }
 
 
-{--
 requestVK ::
  MonadIO m =>
  Monad m =>
  MonadThrow m =>
  Applicative m => 
- Log m =>
- Url ->  Message
---}
+ --Log m =>
+ --Log IO =>
+ Url -> m Message
+
 
 
 requestVK  Url{..} = do
@@ -189,30 +189,11 @@ requestVK  Url{..} = do
         -- logI $ T.pack.show $ mess
         pure mess
       Nothing -> do
-        logI $ T.pack "Invalid Json"  
-        logI $ T.pack.BS8.unpack $ body
-        pure NoMessage
+        --logI $ T.pack "Invalid Json"  
+        --logI $ T.pack.BS8.unpack $ body
+        pure $   ErrorVK $ ErrVK "0" "Invalid Json"
     _ -> do 
-        logI $ T.pack "no 200"
-        pure NoMessage
+        --logI $ T.pack "no 200"
+        pure $ ErrorVK $ ErrVK "1" "no 200"
        
-{--
-maybeToEither :: Maybe ErrorVK -> Maybe Message -> String -> Either ErrorVK Message
-maybeToEither (Just err) _ _= Left err
-maybeToEither _ (Just mess) _  = Right  mess
-maybeToEither Nothing Nothing  tx =   Left  ErrorVK{ error = Err {error_msg = tx, error_code = 0}} 
-
-sendMessage secKey ts msg = do
- body <- requestVK' url
- case body of
-   Message body' ->
-     case body' ^? key "error" . key "error_msg" . _String of
-       Just err -> pure $ Error ("error sending message " <> T.unpack err <> " app will be stopped")
-       Nothing -> do
-           logI $ "sending message: " <> T.pack(text (_object msg))
-           logI "awaiting message"
-           getMessageVK secKey (show ts) 
- where
-    url = "https://api.vk.com/method/messages.send?user_id=" <>  show(from_id(_object msg)) 
-           <> "&message=" <> text (_object msg)  <>   "&title=gh&access_token="  <>  keyGroup <> "&v=5.50"
---}           
+        

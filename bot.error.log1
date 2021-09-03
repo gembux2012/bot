@@ -1,6 +1,3 @@
-08-02-2021 15:00:50 +07 INFO  awaiting messages 
-08-02-2021 15:01:15 +07 INFO  awaiting messages 
-08-02-2021 15:01:41 +07 INFO  awaiting messages 
-08-02-2021 15:02:06 +07 INFO  awaiting messages 
-08-02-2021 15:02:31 +07 INFO  awaiting messages 
-08-02-2021 15:02:57 +07 INFO  awaiting messages 
+09-03-2021 16:12:35 +07 INFO  awaiting messages 
+09-03-2021 16:12:38 +07 INFO event: message_new
+09-03-2021 16:12:38 +07 INFO Message' {ts' = "317", updates = [MessageUpdates {_type = "message_new", from_id = 454751226, text = "2", _payload = "2"}]}
