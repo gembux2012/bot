@@ -35,10 +35,9 @@ class Monad m => Log m where
 
 instance
   ( Has (Logger  m) r ,
-    Monad m, 
-    Monoid w
+    Monad m 
   ) =>
-  Log (RWST r w s m)  where
+  Log (ReaderT r  m)  where
   logI  a = asks getter >>= \(Logger doLog) -> lift . doLog $ fromLoggable INFO <> " " <>  fromLoggable  a
   logW a =
     asks getter >>= \(Logger doLog) -> lift . doLog $ fromLoggable WARNING <> " " <>  fromLoggable a

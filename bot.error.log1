@@ -1,3 +1,5 @@
-09-03-2021 16:12:35 +07 INFO  awaiting messages 
-09-03-2021 16:12:38 +07 INFO event: message_new
-09-03-2021 16:12:38 +07 INFO Message' {ts' = "317", updates = [MessageUpdates {_type = "message_new", from_id = 454751226, text = "2", _payload = "2"}]}
+09-10-2021 15:49:18 +07 INFO received message from user id :454751226 1button :1
+09-10-2021 15:49:18 +07 INFO send message to user id:454751226 1
+09-10-2021 15:49:18 +07 INFO recponse code 178
+09-10-2021 15:49:18 +07 INFO  awaiting messages 
+09-10-2021 15:49:18 +07 INFO event: message_reply

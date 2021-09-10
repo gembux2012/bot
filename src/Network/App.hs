@@ -46,7 +46,7 @@ import Logger.Class (Log (..))
 import Network.HTTP.Conduit (http)
 import Network.HTTP.Simple
 import Data.Aeson.Types (Parser, parseMaybe, FromJSON, Value, withObject, (.:), fieldLabelModifier, genericParseJSON, defaultOptions)
-import Data.Aeson (decodeStrict,parseJSON, eitherDecodeStrict)
+import Data.Aeson (decodeStrict,parseJSON, eitherDecodeStrict, encode)
 --import Data.Aeson.Encode
 import Data.Either 
 import Data.String
@@ -58,20 +58,13 @@ import Data.Maybe
 import Network.Types 
 --import Network.Types (Message (..))
 import Network.URI
+import Data.Text (pack)
 import Control.Monad (when )
 import Control.Monad.Catch 
+import Config (Config)
+import qualified Data.ByteString.Lazy as LBS
 
---import Network.Types (MessageVK)
 
-
-
---import Control.Monad.Base (fromList)
-
---https://api.vk.com/method/groups.getLongPollServer?access_token=&group_id=202652768&v=5.130
--- send https://api.vk.com/method/messages.send?user_id=454751226&message=&title=gh&access_token=v=5.50
---https://vk.com/dev/messages.send?params[user_id]=454751226&params[random_id]=0&params[message]=Test%20message&params[dont_parse_links]=0&params[disable_mentions]=0&params[intent]=default&params[v]=5.130
--- outh https://api.vk.com/method/groups.getLongPollServer?access_token=57f5906e918c8dc83168e8d92770dde7610f53d0b143eb2030bc2f116532e07a463d0cdd82db544fc3efb&group_id=202652768&v=5.50
--- receive https://lp.vk.com/wh202652768?act=a_check&key=f01f9b9c85df0878d0e181a28ee14b3909f06099&ts=10&wait=25
 idGroup = "202652768" :: BS8.ByteString
 
 keyGroup = "13b47b20e6324c0dcc288baec4a318ee359bd16dc2f57c7bf215755241faf955de12b014a780ac7f9e455"
@@ -160,40 +153,32 @@ emptyButtons = Buttons
 
 requestVK ::
  MonadIO m =>
- Monad m =>
  MonadThrow m =>
- Applicative m => 
- --Log m =>
- --Log IO =>
- Url -> m Message
-
-
-
-requestVK  Url{..} = do
-  --logI $ T.pack.show $ Url{..}
-  request' <- parseRequest $ BS8.unpack $ requestPath
+ Config -> Url ->  m Message
+requestVK  cong Url{..}  = do
+  request' <- parseRequest $ BS8.unpack  requestPath
   let request
         =  setRequestMethod requestMethod
         $ setRequestQueryString requestQS
          request'
-  --logI $ T.pack.show $ request
   response <- httpBS request
- 
   let status = getResponseStatusCode response
   case status of
     200 -> do 
      let body = getResponseBody response
-     --logI $ T.pack.BS8.unpack $ body
      case decodeStrict.getResponseBody $ response :: Maybe Message of
       Just  mess -> do 
-        -- logI $ T.pack.show $ mess
-        pure mess
+             pure mess
       Nothing -> do
-        --logI $ T.pack "Invalid Json"  
-        --logI $ T.pack.BS8.unpack $ body
         pure $   ErrorVK $ ErrVK "0" "Invalid Json"
     _ -> do 
-        --logI $ T.pack "no 200"
         pure $ ErrorVK $ ErrVK "1" "no 200"
        
+dispatcherAnswer :: String -> String ->  ( BS8.ByteString,  BS8.ByteString)
+dispatcherAnswer ['\\','r','e','p','e','a','t'] _ = (BS8.pack "how many times will you repeat ?",  
+                                                   LBS.toStrict $ encode repeatButtons)
+dispatcherAnswer str  btn 
+  |  btn /= "" =  (BS8.pack $ " ОК, i will repeat " <> btn <> " time(s), try",
+                     LBS.toStrict $ encode emptyButtons)
+  | otherwise = ( encodeUtf8.T.pack $ str, LBS.toStrict $ encode emptyButtons)
         
