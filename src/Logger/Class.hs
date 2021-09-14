@@ -16,7 +16,7 @@ import Control.Monad.Reader (ReaderT, asks, lift, runReaderT)
 import Data.Has (Has, getter)
 import Data.Text (Text, append, pack)
 import GHC.Stack.Types (HasCallStack)
-import Logger.Adt (Priority (..))
+import Logger.Types (Priority (..))
 import Control.Monad.RWS.Lazy (RWST, MonadIO, tell)
 import Data.String
 
@@ -35,7 +35,7 @@ class Monad m => Log m where
 
 instance
   ( Has (Logger  m) r ,
-    Monad m 
+    Monad m
   ) =>
   Log (ReaderT r  m)  where
   logI  a = asks getter >>= \(Logger doLog) -> lift . doLog $ fromLoggable INFO <> " " <>  fromLoggable  a

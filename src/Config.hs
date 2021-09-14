@@ -19,7 +19,7 @@ import qualified Data.ByteString.Char8             as BS
 import           GHC.Generics                      (Generic)
 import           System.Directory.Internal.Prelude (getArgs)
 
-import           Logger.Adt                        (LogOpts, defaultLogOpts)
+import           Logger.Types                        (LogOpts, defaultLogOpts)
 
 
 newtype Config

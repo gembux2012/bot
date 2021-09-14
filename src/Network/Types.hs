@@ -48,7 +48,7 @@ data Buttons = Buttons
  {one_time :: Bool,
   buttons :: [[Button]]
  }
- deriving (Generic, ToJSON)
+ deriving (Generic, ToJSON, Show)
  
 
  
@@ -56,14 +56,14 @@ data Button = Button
  { action :: Action,
    color :: String
  }
- deriving (Generic, ToJSON)
+ deriving (Generic, ToJSON,Show)
  
 data Action = Action
   { type' :: String,
     payload :: String,
     label :: String
   } 
- 
+ deriving (Show)
 
 instance ToJSON Action where
   toJSON Action{..} = object [

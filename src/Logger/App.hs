@@ -7,7 +7,7 @@ module Logger.App
   )
 where
 
-import Logger.Adt (LogOpts (..))
+import Logger.Types (LogOpts (..))
 import Control.Exception.Base (SomeException, handle, try)
 import Control.Monad as CM
 import Data.Text (Text, unpack)

@@ -42,13 +42,19 @@ import Data.Map (Map)
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import GHC.Generics (Generic)
-import Logger.Adt
+import Logger.Types
 import Logger.App (printLog)
 import Logger.Class
-import Network.App 
+import Network.App
 import Network.Class
 import Network.Types
 import Streams
+import MutableList
+
+
+
+type ListUser   = Map String Int
+newtype ListUserState = ListUserState (MVar ListUser)
 
 main :: IO ()
 main = do
@@ -56,14 +62,17 @@ main = do
   let config = snd conf
   putStrLn $ fst conf
   l <- initLogger config
+  listUser <- newList
   let app  =
         Application
           { requests =
             Requests
             { doGetAccess = requestVK config getKeyAccessUrl,
               doGetMessage = \k s ts -> requestVK config (getMessageUrl k s ts),
-              doSendMessage = \id text btn -> 
-               requestVK config  (uncurry (sendMessageUrl id) (dispatcherAnswer text btn)) 
+              doSendMessage = \id text btn ->
+                           requestVK config  (sendMessageUrl id text btn), 
+              doGetAnswerForSend = \id text btn -> 
+                           answerCreator  id text btn listUser         
             },
             logger = Logger $ logMessage l
           }
@@ -118,7 +127,7 @@ getMessages key server ts = do
                         <> text
                         <> "button :"
                         <> _payload
-                    postMessage (BS8.pack . show $ from_id) text _payload
+                    postMessage from_id text  _payload
                   _ -> logI $ pack "event: " <> pack _type
             )
             updates
@@ -134,13 +143,15 @@ getMessages key server ts = do
 postMessage ::
   Log m =>
   Requestable m =>
-  BS8.ByteString ->
+  Integer ->
   String ->
   String ->
   m ()
 postMessage id text btn = do
-  logI $ "send message to user id:" <> BS8.unpack id <> " " <> text
-  resp <- sendMessage id text btn
+  logI $ "send message to user id:" <> show id <> " " <> text
+  let btn' = if btn /= "" then read btn else 0 
+  answer <- getAnswerForSend id text btn' 
+  resp <- uncurry (sendMessage (BS8.pack . show $ id)) answer
   case resp of
     Response rsp -> do
       logI $ "recponse code " <> show rsp

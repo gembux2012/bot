@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 
-module Logger.Adt
+module Logger.Types
   ( LogOpts (..),
     
     Priority (..),
