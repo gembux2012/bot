@@ -8,9 +8,7 @@
 {-# LANGUAGE UndecidableInstances  #-}
 
 module Config
-  ( Config (..),
-    readConfig,
-  )
+  
 where
 
 import           Control.Exception.Base            (try)
@@ -18,18 +16,10 @@ import           Data.Aeson
 import qualified Data.ByteString.Char8             as BS
 import           GHC.Generics                      (Generic)
 import           System.Directory.Internal.Prelude (getArgs)
+import           Logger.Types                        
 
-import           Logger.Types                        (LogOpts, defaultLogOpts)
 
 
-newtype Config
-  = Config {logOpts :: LogOpts}
-  deriving (Generic,  FromJSON, Show)
-
-defaultConfig= Config
-  { logOpts = defaultLogOpts
-  
-  }
 warning :: [Char]
 warning = ", default values will be used!!."
 

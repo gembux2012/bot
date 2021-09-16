@@ -27,7 +27,7 @@ module Network.App where
 
 --import Network.Types (Message (..))
 
-import Config (Config)
+
 import qualified Control.Concurrent.Lifted as CCL
 import Control.Concurrent.Lifted (MVar)
 import Control.Lens (_Wrapped)
@@ -56,8 +56,8 @@ import Data.Text (pack)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import qualified Data.Text.IO as TIO
 import GHC.Generics
-import Logger.Class (Log (..))
-import Network.HTTP.Conduit (http)
+import Logger.Types
+import Network.HTTP.Conduit (http, HttpException(HttpExceptionRequest), HttpException)
 import Network.HTTP.Simple
 import Network.Types
 import Network.Types
@@ -158,7 +158,8 @@ emptyButtons =
 requestVK ::
   MonadIO m =>
   MonadThrow m =>
-  Config ->
+  MonadCatch m =>
+  VKOpts ->
   Url ->
   m Message
 requestVK listUser Url {..} = do
@@ -168,56 +169,65 @@ requestVK listUser Url {..} = do
           setRequestQueryString
             requestQS
             request'
-  response <- httpBS request
-  let status = getResponseStatusCode response
-  case status of
-    200 -> do
-      let body = getResponseBody response
-      case decodeStrict . getResponseBody $ response :: Maybe Message of
-        Just mess -> do
-          pure mess
-        Nothing -> do
-          pure $ ErrorVK $ ErrVK "0" "Invalid Json"
-    _ -> do
-      pure $ ErrorVK $ ErrVK "1" "no 200"
+  response <- try $ httpBS request
+  case response of 
+   Left e -> pure $ ErrorVK $ ErrVK 2 (displayException (e :: HttpException ))
+   Right response -> do     
+    let status = getResponseStatusCode response
+    case status of
+      200 -> do
+        let body = getResponseBody response
+        case decodeStrict . getResponseBody $ response :: Maybe Message of
+          Just mess -> do
+            pure mess
+          Nothing -> do
+            pure $ ErrorVK $ ErrVK 0 "Invalid Json"
+      _ -> do
+        pure $ ErrorVK $ ErrVK 1 "no 200"
 
-answerCreator :: 
-  Integer -> String -> Int -> MVar (Map Integer Int) -> 
+answerCreator ::
+  Config -> Integer -> String -> Int -> MVar (Map Integer Int) ->
   IO (BS8.ByteString, BS8.ByteString)
-answerCreator _ ['\\', 'r', 'e', 'p', 'e', 'a', 't'] _ _ =  
+  
+answerCreator _ _ ['\\', 'r', 'e', 'p', 'e', 'a', 't'] _ _ =
     return
       ( BS8.pack "how many times will you repeat ?",
         LBS.toStrict $ encode repeatButtons
       )
 
-answerCreator id str btn l   
+answerCreator c _ ['\\','h', 'e', 'l', 'p'] _ _ =
+    return
+      ( BS8.pack.show $ c  ,
+        LBS.toStrict $ encode emptyButtons
+      )
+
+answerCreator _ id str btn l
   | btn /= 0 = do
-     _ <- addList id   btn l   
-     return 
+     _ <- addList id   btn l
+     return
       ( BS8.pack $ " ОК, i will repeat " <> show btn <> " time(s), try",
         LBS.toStrict $ encode emptyButtons
       )
   | otherwise = do
     repeat <- findInList l id
-    case repeat of 
-     Just r -> do  
+    case repeat of
+     Just r -> do
       let s =concat[str <>", " | r <- [0..r-1]]
       return  (encodeUtf8 . T.pack $ s, LBS.toStrict $ encode emptyButtons)
-     Nothing -> 
+     Nothing ->
       return  (encodeUtf8 . T.pack $ str, LBS.toStrict $ encode emptyButtons)
 
  --lookup (id ::Int  l >>= \(Just user) -> update user btn >>= return()
 
 addList :: Integer -> Int -> MVar (Map Integer Int) -> IO ()
-addList id btn l = do  
-  t <- ML.lookup l id  
+addList id btn l = do
+  t <- ML.lookup l id
   case t  of
-   Just t -> 
+   Just t ->
     ML.update l id  btn
    Nothing -> do
-     ML.insert l id btn 
-     return()    
+     ML.insert l id btn
+     return()
 
-findInList :: MVar (Map Integer Int) -> Integer -> IO (Maybe Int)  
-findInList l id  = ML.lookup l id  >>= \repeat -> return repeat   
-     
+findInList :: MVar (Map Integer Int) -> Integer -> IO (Maybe Int)
+findInList l id  = ML.lookup l id  >>= \repeat -> return repeat

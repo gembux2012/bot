@@ -40,6 +40,8 @@ dependencies:
 - either
 - network-uri
 - utf8-string
+- unliftio
+- hspec
 
 
 

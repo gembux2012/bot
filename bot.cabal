@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bf5b1281d6d431c1b90b5b2798b16be4cdabf79cfcdf6277bba1a8178075e076
+-- hash: 4e8d80a5c1a39aa1877781d51da9855c13e8f22024cde3d5b9874b8503a2a074
 
 name:           bot
 version:        0.1.0.0
@@ -50,6 +50,7 @@ library
     , either
     , exceptions
     , filepath
+    , hspec
     , http-conduit
     , lens
     , lens-aeson
@@ -60,6 +61,7 @@ library
     , time
     , transformers
     , transformers-base
+    , unliftio
     , utf8-string
   default-language: Haskell2010
 
@@ -81,6 +83,7 @@ executable bot-exe
     , either
     , exceptions
     , filepath
+    , hspec
     , http-conduit
     , lens
     , lens-aeson
@@ -91,6 +94,7 @@ executable bot-exe
     , time
     , transformers
     , transformers-base
+    , unliftio
     , utf8-string
   default-language: Haskell2010
 
@@ -113,6 +117,7 @@ test-suite bot-test
     , either
     , exceptions
     , filepath
+    , hspec
     , http-conduit
     , lens
     , lens-aeson
@@ -123,5 +128,6 @@ test-suite bot-test
     , time
     , transformers
     , transformers-base
+    , unliftio
     , utf8-string
   default-language: Haskell2010

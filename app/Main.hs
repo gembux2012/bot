@@ -48,13 +48,15 @@ import Logger.Class
 import Network.App
 import Network.Class
 import Network.Types
+import qualified UnliftIO.Concurrent as U (threadDelay)
 import Streams
 import MutableList
+import Logger.Types
 
 
 
-type ListUser   = Map String Int
-newtype ListUserState = ListUserState (MVar ListUser)
+--type ListUser   = Map String Int
+--newtype ListUserState = ListUserState (MVar ListUser)
 
 main :: IO ()
 main = do
@@ -72,7 +74,7 @@ main = do
               doSendMessage = \id text btn ->
                            requestVK config  (sendMessageUrl id text btn), 
               doGetAnswerForSend = \id text btn -> 
-                           answerCreator  id text btn listUser         
+                           answerCreator config id text btn listUser         
             },
             logger = Logger $ logMessage l
           }
@@ -80,6 +82,7 @@ main = do
   logStop l
 
 requestAccess ::
+  MonadIO m =>
   Log m =>
   Requestable m =>
   m Message
@@ -87,16 +90,22 @@ requestAccess = do
   logI " get access "
   resp <- getAccess
   case resp of
-    Access access -> do
+    Access access  -> do
       logI " accessed, awaiting messages "
       logI $ key access
       getMessages
         (BS8.pack $ key access)
         (BS8.pack $ server access)
         (BS8.pack $ ts access)
-    ErrorVK error -> do
-      logI $ error_msg error
-      pure NoMessage
+    ErrorVK error  -> do
+      case error_code error of
+       2   -> do 
+         logW $ error_msg error
+         logW "next connection attempt in 30 seconds"
+         U.threadDelay (10^6 * 60) 
+         requestAccess 
+       _ -> do   
+          pure NoMessage
     _ -> do
       logI $ pack . show $ resp
       pure NoMessage

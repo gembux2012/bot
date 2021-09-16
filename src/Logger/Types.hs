@@ -6,11 +6,7 @@
 
 
 module Logger.Types
-  ( LogOpts (..),
-    
-    Priority (..),
-    defaultLogOpts 
-  )
+
 where
 
 import Data.Aeson.Types (FromJSON, withObject, parseJSON, (.:?), (.!=))
@@ -18,10 +14,22 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 import GHC.Stack.Types (HasCallStack)
 
---newtype Logger m = Logger {dologLn :: HasCallStack => Text -> m ()}
-
 data Priority = INFO | NOTICE | WARNING | ERROR deriving (Show, Eq, Ord)
 
+data Config  = Config 
+  {logOpts :: LogOpts,
+   vkOpts :: VKOpts
+  }
+  deriving (Generic,  FromJSON, Show)
+
+defaultConfig= Config
+  { logOpts = defaultLogOpts
+  
+  }
+
+data VKOpts = VKOpts{}
+ deriving (Generic,  FromJSON, Show)
+ 
 data LogOpts = LogOpts
   { pathToLog :: String,
     nameLog :: String,
@@ -31,7 +39,7 @@ data LogOpts = LogOpts
     priority :: Int
   }
   deriving (Show)
-
+ 
 instance FromJSON LogOpts where
    parseJSON = withObject "logops" $ \o -> do
      pathToLog <- o .:? "pathToLog" .!=  pathToLog defaultLogOpts

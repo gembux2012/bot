@@ -24,7 +24,7 @@ import Data.Text.Encoding (encodeUtf8)
 import Network.HTTP.Simple
 import Text.Read (readMaybe)
 
-
+type BS8BS = BS8.ByteString 
 --data ResponseMessage' = Message' BS8.ByteString | Stop
 
 data Method = GetKeyAccess | GetMessage | SendMessage
@@ -90,7 +90,7 @@ data Message  = Message'
   deriving ( Show) 
 
 data ErrVK= ErrVK 
- { error_code :: String,
+ { error_code :: Int,
    error_msg :: String 
  } 
  deriving (Generic, FromJSON,  Show)
