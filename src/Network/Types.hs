@@ -30,6 +30,7 @@ type BS8BS = BS8.ByteString
 data Method = GetKeyAccess | GetMessage | SendMessage
  deriving( Eq)
 
+
 data Url= Url
  { --requestHost :: BS8.ByteString,
    requestMethod :: BS8.ByteString,

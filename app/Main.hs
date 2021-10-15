@@ -11,9 +11,7 @@
 
 module Main where
 
-import Config (Config (..), readConfig)
---import Data.ByteString.Char8 (pack)
-
+import Config (readConfig)
 import Control.Applicative
 import Control.Concurrent
 import Control.Exception.Base ()
@@ -42,7 +40,6 @@ import Data.Map (Map)
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import GHC.Generics (Generic)
-import Logger.Types
 import Logger.App (printLog)
 import Logger.Class
 import Network.App
@@ -52,6 +49,7 @@ import qualified UnliftIO.Concurrent as U (threadDelay)
 import Streams
 import MutableList
 import Logger.Types
+import Answer
 
 
 
@@ -69,14 +67,14 @@ main = do
         Application
           { requests =
             Requests
-            { doGetAccess = requestVK config getKeyAccessUrl,
-              doGetMessage = \k s ts -> requestVK config (getMessageUrl k s ts),
+            { doGetAccess = requestVK (vkOpts config) getKeyAccessUrl,
+              doGetMessage = \k s ts -> requestVK (vkOpts config) (getMessageUrl k s ts),
               doSendMessage = \id text btn ->
-                           requestVK config  (sendMessageUrl id text btn), 
-              doGetAnswerForSend = \id text btn -> 
-                           answerCreator config id text btn listUser         
+                           requestVK (vkOpts config) (sendMessageUrl id text btn)
             },
-            logger = Logger $ logMessage l
+            logger = Logger $ logMessage l,
+            answer = Answer $ \id text btn ->
+                                  answerCreator (vkOpts config) id text btn listUser
           }
   runReaderT requestAccess app
   logStop l
@@ -85,6 +83,7 @@ requestAccess ::
   MonadIO m =>
   Log m =>
   Requestable m =>
+  Answerer m =>
   m Message
 requestAccess = do
   logI " get access "
@@ -99,12 +98,12 @@ requestAccess = do
         (BS8.pack $ ts access)
     ErrorVK error  -> do
       case error_code error of
-       2   -> do 
+       2   -> do
          logW $ error_msg error
          logW "next connection attempt in 30 seconds"
-         U.threadDelay (10^6 * 60) 
-         requestAccess 
-       _ -> do   
+         U.threadDelay (10^6 * 60)
+         requestAccess
+       _ -> do
           pure NoMessage
     _ -> do
       logI $ pack . show $ resp
@@ -113,6 +112,7 @@ requestAccess = do
 getMessages ::
   Log m =>
   Requestable m =>
+  Answerer m =>
   BS8.ByteString ->
   BS8.ByteString ->
   BS8.ByteString ->
@@ -152,14 +152,15 @@ getMessages key server ts = do
 postMessage ::
   Log m =>
   Requestable m =>
+  Answerer m =>
   Integer ->
   String ->
   String ->
   m ()
 postMessage id text btn = do
   logI $ "send message to user id:" <> show id <> " " <> text
-  let btn' = if btn /= "" then read btn else 0 
-  answer <- getAnswerForSend id text btn' 
+  let btn' = if btn /= "" then read btn else 0
+  answer <- getAnswerForSend id text btn'
   resp <- uncurry (sendMessage (BS8.pack . show $ id)) answer
   case resp of
     Response rsp -> do
@@ -167,16 +168,21 @@ postMessage id text btn = do
     _ -> do
       logI $ pack . show $ resp
 
-data Application m = Application
+data Application opt m = Application
   { logger :: Logger m,
-    requests :: Requests m
+    requests :: Requests m,
+    answer :: Answer m
   }
   deriving stock (Generic)
 
-instance Has (Logger m) (Application m) where
+instance Has (Logger m) (Application opt m) where
   getter = logger
   modifier f a = a {logger = f . logger $ a}
 
-instance Has (Requests m) (Application m) where
+instance Has (Requests m) (Application opt m) where
   getter = requests
   modifier f a = a {requests = f . requests $ a}
+
+instance Has (Answer m) (Application opt m) where
+  getter = answer
+  modifier f a = a {answer = f . answer $ a}

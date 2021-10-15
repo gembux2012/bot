@@ -25,16 +25,14 @@ import Logger.Types
 data Requests m = Requests
   { doGetAccess ::  m Message,
     doGetMessage :: BS8.ByteString -> BS8.ByteString -> BS8.ByteString -> m Message,
-    doSendMessage :: BS8.ByteString -> BS8.ByteString -> BS8.ByteString -> m Message,
-    doGetAnswerForSend ::  Integer -> String -> Int -> m (BS8.ByteString,BS8.ByteString)
-    
+    doSendMessage :: BS8.ByteString -> BS8.ByteString -> BS8.ByteString -> m Message
   }
 
 class Monad m  => Requestable m where
   getAccess ::  m Message
   getMessage :: BS8.ByteString -> BS8.ByteString -> BS8.ByteString -> m Message
   sendMessage :: BS8.ByteString -> BS8.ByteString -> BS8.ByteString -> m Message
-  getAnswerForSend :: Integer -> String -> Int -> m (BS8.ByteString, BS8.ByteString)
+  
 
 instance
   ( Has (Requests m) r,
@@ -43,12 +41,12 @@ instance
   ) =>
   Requestable (ReaderT r m)
   where
-  getAccess  = asks getter >>= \(Requests doGetAcc _ _ _) -> lift $ doGetAcc 
-  getMessage k s ts = asks getter >>= \(Requests _ doGetMess _ _) -> lift $ doGetMess k s ts
-  sendMessage id text btn = asks getter >>= \(Requests _ _ doSendMess _) -> lift $ doSendMess id text btn
-  getAnswerForSend  id text btn = asks getter >>= \(Requests _ _ _ doGAFS) -> lift $ doGAFS  id text btn
+  getAccess  = asks getter >>= \(Requests doGetAcc _ _ ) -> lift  doGetAcc 
+  getMessage k s ts = asks getter >>= \(Requests _ doGetMess _ ) -> lift $ doGetMess k s ts
+  sendMessage id text btn = asks getter >>= \(Requests _ _ doSendMess ) -> lift $ doSendMess id text btn
   
-instance  Requestable (ReaderT VKOpts IO) -- (ReaderT Config m) 
+ 
+instance  Requestable IO  
  where
   getAccess  =  ask >>= \c ->  requestVK c  getKeyAccessUrl
   getMessage k s ts = ask >>= \c  -> requestVK c (getMessageUrl k s ts)

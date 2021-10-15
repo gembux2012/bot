@@ -1,5 +1,16 @@
-09-10-2021 15:49:18 +07 INFO received message from user id :454751226 1button :1
-09-10-2021 15:49:18 +07 INFO send message to user id:454751226 1
-09-10-2021 15:49:18 +07 INFO recponse code 178
-09-10-2021 15:49:18 +07 INFO  awaiting messages 
-09-10-2021 15:49:18 +07 INFO event: message_reply
+09-15-2021 14:30:38 +07 INFO  get access 
+09-15-2021 14:30:38 +07 WARNING HttpExceptionRequest Request {
+  host                 = "api.vk.com"
+  port                 = 443
+  secure               = True
+  requestHeaders       = []
+  path                 = "/method/groups.getLongPollServer"
+  queryString          = "?access_token=13b47b20e6324c0dcc288baec4a318ee359bd16dc2f57c7bf215755241faf955de12b014a780ac7f9e455&group_id=202652768&v=5.103"
+  method               = "GET"
+  proxy                = Nothing
+  rawBody              = False
+  redirectCount        = 10
+  responseTimeout      = ResponseTimeoutDefault
+  requestVersion       = HTTP/1.1
+}
+ (ConnectionFailure Network.Socket.getAddrInfo (called with preferred socket type/protocol: AddrInfo {addrFlags = [AI_ADDRCONFIG], addrFamily = AF_UNSPEC, addrSocketType = Stream, addrProtocol = 0, addrAddress = <assumed to be undefined>, addrCanonName = <assumed to be undefined>}, host name: Just "api.vk.com", service name: Just "443"): does not exist (Name or service not known))

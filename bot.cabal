@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4e8d80a5c1a39aa1877781d51da9855c13e8f22024cde3d5b9874b8503a2a074
+-- hash: febce8099dc4e90b7195249b2b81628b629b2ac42368002b7a7dad54224b39d9
 
 name:           bot
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      Answer
       Config
       Logger.App
       Logger.Class

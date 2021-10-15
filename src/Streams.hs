@@ -3,7 +3,7 @@ module Streams where
 import Control.Concurrent.Lifted (putMVar,takeMVar,newEmptyMVar,MVar)
 import Control.Concurrent (forkIO)
 
-import Config
+import Logger.Types
 import Logger.App (printLog)
 import Data.Text (Text)
 

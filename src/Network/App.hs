@@ -186,7 +186,7 @@ requestVK listUser Url {..} = do
         pure $ ErrorVK $ ErrVK 1 "no 200"
 
 answerCreator ::
-  Config -> Integer -> String -> Int -> MVar (Map Integer Int) ->
+  VKOpts -> Integer -> String -> Int -> MVar (Map Integer Int) ->
   IO (BS8.ByteString, BS8.ByteString)
   
 answerCreator _ _ ['\\', 'r', 'e', 'p', 'e', 'a', 't'] _ _ =

@@ -1,6 +1,5 @@
-09-10-2021 15:49:15 +07 INFO recponse code 176
-09-10-2021 15:49:15 +07 INFO  awaiting messages 
-09-10-2021 15:49:15 +07 INFO event: message_reply
-09-10-2021 15:49:15 +07 INFO  awaiting messages 
-09-10-2021 15:49:18 +07 INFO event: message_new
-09-10-2021 15:49:18 +07 INFO Message' {ts' = "357", updates = [MessageUpdates {_type = "message_new", from_id = 454751226, text = "1", _payload = "1"}]}
+09-15-2021 12:08:00 +07 WARNING next connection attempt in 30 seconds
+09-15-2021 12:09:00 +07 INFO  get access 
+09-15-2021 12:09:08 +07 INFO  accessed, awaiting messages 
+09-15-2021 12:09:08 +07 INFO 5704a1ab7e60a1af6edcf2c731ae48371db96cff
+09-15-2021 12:09:38 +07 INFO ErrorVK {error = ErrVK {error_code = 2, error_msg = "HttpExceptionRequest Request {\n  host                 = \"lp.vk.com\"\n  port                 = 443\n  secure               = True\n  requestHeaders       = []\n  path                 = \"/wh202652768\"\n  queryString          = \"?act=a_check&key=5704a1ab7e60a1af6edcf2c731ae48371db96cff&ts=413&wait=25\"\n  method               = \"GET\"\n  proxy                = Nothing\n  rawBody              = False\n  redirectCount        = 10\n  responseTimeout      = ResponseTimeoutDefault\n  requestVersion       = HTTP/1.1\n}\n ResponseTimeout"}}

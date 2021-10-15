@@ -1,20 +1,24 @@
+{-# LANGUAGE OverlappingInstances #-}
+
 module Main where
 
 import Test.Hspec
 
 import Network.Types (Message(..), Access'(..),ErrVK(..))
 import Network.Class (getAccess)
-import Control.Monad.Reader (runReaderT)
---import Network.Class
---import Network.Types 
-
+import Control.Monad.Reader (runReaderT, runReader)
+import Logger.Types (VKOpts(..), button, Config)
 
 main :: IO ()
-main = hspec $ do
-  describe "Prelude.head" $ do
+main = hspec spec 
+spec :: Spec
+spec =  do
+  describe "bot VK logick" $ do
     it "acces" $ do
-     runReaderT (requestAccess >>= (`shouldSatisfy` checkAuthToken)) app
+    runReader getAccess  opts >>= (`shouldSatisfy` checkAuthToken)
+ where opts = VKOpts { button =  "jkh"} 
 
 checkAuthToken (Access (Access' _ _ _))  = True
 checkAuthToken (ErrorVK (ErrVK _ _)) = True
-checkAuthToken _ = False     
+checkAuthToken _ = False
+

@@ -27,7 +27,9 @@ defaultConfig= Config
   
   }
 
-data VKOpts = VKOpts{}
+newtype VKOpts = VKOpts
+ { button :: String
+ }
  deriving (Generic,  FromJSON, Show)
  
 data LogOpts = LogOpts
